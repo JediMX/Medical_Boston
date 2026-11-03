@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  
+  <!-- Optimización para Aplicación Móvil (PWA / WebApp Standalone) -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Boston Medical">
+  <meta name="theme-color" content="#0b1f3f">
+
+  <title>Boston Medical Record | Colegio Boston</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --color-fondo: #f0f3f8;
+      --color-primario: #0b1f3f;       /* Azul marino institucional Boston */
+      --color-primario-hover: #143263;
+      --color-dorado: #c59b27;
+      --color-texto: #2d3748;
+      --color-texto-muted: #718096;
+      --color-borde: #cbd5e1;
+      --color-borde-focus: #0b1f3f;
+      --color-exito: #10b981;
+      --color-error: #ef4444;
+      --color-advertencia: #f59e0b;
+      --radio-tarjeta: 16px;
+      --radio-input: 10px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: var(--color-fondo);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--color-texto);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .centrado {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px 15px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 400px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .dashboard-container {
+      max-width: 680px;
+      padding: 24px 16px 50px 16px;
+      margin: 0 auto;
+    }
+
+    .logo {
+      width: 130px;
+      height: auto;
+      margin-bottom: 12px;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.06));
+    }
+
+    h1 {
+      font-size: 22px;
+      color: var(--color-primario);
+      font-weight: 700;
+      margin: 0 0 4px 0;
+      letter-spacing: -0.3px;
+    }
+
+    .subtitulo-app {
+      font-size: 13px;
+      color: var(--color-texto-muted);
+      margin-bottom: 24px;
+      font-weight: 500;
+    }
+
+    h2 {
+      font-size: 19px;
+      color: var(--color-primario);
+      margin: 0 0 6px 0;
+      font-weight: 600;
+    }
+
+    .card {
+      background-color: #ffffff;
+      border-radius: var(--radio-tarjeta);
+      padding: 28px 24px;
+      box-shadow: 0 10px 25px -5px rgba(11, 31, 63, 0.08), 0 4px 6px -2px rgba(11, 31, 63, 0.03);
+      text-align: left;
+      margin-bottom: 20px;
+      border: 1px solid rgba(226, 232, 240, 0.8);
+    }
+    
+    .input-group {
+      margin-bottom: 16px;
+      position: relative;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 13px;
+      color: var(--color-texto);
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    .icon {
+      position: absolute;
+      bottom: 12px;
+      left: 14px;
+      width: 20px;
+      height: 20px;
+      fill: #94a3b8;
+      pointer-events: none;
+    }
+    
+    input[type="text"],
+    input[type="password"],
+    input[type="date"],
+    input[type="time"],
+    input[type="number"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid var(--color-borde);
+      border-radius: var(--radio-input);
+      font-size: 15px;
+      color: var(--color-texto);
+      background-color: #ffffff;
+      outline: none;
+      font-family: inherit;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--color-primario);
+      box-shadow: 0 0 0 3px rgba(11, 31, 63, 0.12);
+    }
+
+    .login-input {
+      padding-left: 44px !important;
+    }
+
+    .btn-primario {
+      width: 100%;
+      background-color: var(--color-primario);
+      color: white;
+      border: none;
+      padding: 14px;
+      border-radius: var(--radio-input);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: background-color 0.2s, transform 0.1s;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primario:hover:not(:disabled) {
+      background-color: var(--color-primario-hover);
+    }
+
+    .btn-primario:active:not(:disabled) {
+      transform: scale(0.99);
+    }
+
+    .btn-primario:disabled {
+      background-color: #94a3b8;
+      cursor: not-allowed;
+      opacity: 0.8;
+    }
+
+    .btn-secundario {
+      width: 100%;
+      background-color: #f8fafc;
+      color: var(--color-texto);
+      border: 1px solid var(--color-borde);
+      padding: 12px;
+      border-radius: var(--radio-input);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: background-color 0.2s;
+    }
+
+    .btn-secundario:hover {
+      background-color: #f1f5f9;
+    }
+
+    .hidden { display: none !important; }
+
+    /* Barra Superior */
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      background: #ffffff;
+      padding: 12px 20px;
+      border-radius: var(--radio-tarjeta);
+      border: 1px solid rgba(226, 232, 240, 0.8);
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.03);
+    }
+
+    .user-greeting {
+      font-size: 14px;
+      color: var(--color-texto);
+      font-weight: 600;
+    }
+
+    .user-role-badge {
+      font-size: 11px;
+      background: #e0e7ff;
+      color: #3730a3;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      font-weight: 600;
+      display: inline-block;
+      margin-left: 4px;
+    }
+
+    .logout-btn {
+      color: var(--color-error);
+      text-decoration: none;
+      font-size: 13px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: opacity 0.2s;
+      display: inline-block;
+      margin-top: 2px;
+    }
+
+    .logout-btn:hover {
+      opacity: 0.8;
+      text-decoration: underline;
+    }
+
+    /* Pestañas */
+    .tabs {
+      display: flex;
+      margin-bottom: 20px;
+      gap: 8px;
+    }
+
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 10px 14px;
+      background: #e2e8f0;
+      color: var(--color-texto);
+      border-radius: var(--radio-input);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .tab.active {
+      background: var(--color-primario);
+      color: white;
+    }
+
+    /* Alertas y Notificaciones */
+    .alerta {
+      padding: 12px 16px;
+      border-radius: var(--radio-input);
+      font-size: 14px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .alerta-error {
+      background-color: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    .alerta-exito {
+      background-color: #dcfce7;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+
+    .alerta-info {
+      background-color: #e0f2fe;
+      color: #075985;
+      border: 1px solid #bae6fd;
+    }
+
+    /* Spinner */
+    .spinner {
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top: 2px solid #ffffff;
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+      animation: spin 0.8s linear infinite;
+      display: inline-block;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .badge-status {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 500;
+      color: #64748b;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== SECCIÓN 1: LOGIN ==================== -->
+  <div id="seccionLogin" class="centrado">
+    <div class="container">
+      <img src="https://lh3.googleusercontent.com/d/1ZpZST5pl7nQPkJRhnKLL2WNDNpEO6_3f" alt="Logo Colegio Boston" class="logo">
+      <h1>Boston Medical Record</h1>
+      <div class="subtitulo-app">Sistema de Registro Clínico y Enfermería</div>
+
+      <div class="card">
+        <div id="loginAlerta" class="alerta alerta-error hidden"></div>
+
+        <form id="loginForm" onsubmit="procesarLogin(event)">
+          <div class="input-group">
+            <label for="user">Usuario</label>
+            <svg class="icon" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+            <input type="text" id="user" class="login-input" placeholder="Ingresa tu usuario" autocomplete="username" required>
+          </div>
+
+          <div class="input-group">
+            <label for="pass">Contraseña</label>
+            <svg class="icon" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+            <input type="password" id="pass" class="login-input" placeholder="••••••••" autocomplete="current-password" required>
+          </div>
+
+          <!-- Opción de Mantener Sesión Abierta (Evita desconexiones en móviles) -->
+          <div style="display: flex; align-items: center; justify-content: flex-start; margin: 12px 0 16px 0;">
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--color-texto); cursor: pointer; user-select: none;">
+              <input type="checkbox" id="chkRecordarSesion" checked style="width: 17px; height: 17px; accent-color: var(--color-primario); cursor: pointer;">
+              <span>Mantener mi sesión abierta en este celular</span>
+            </label>
+          </div>
+
+          <button type="submit" class="btn-primario" id="btnEntrar">
+            <span id="btnEntrarTexto">Entrar</span>
+            <span id="btnLoginSpinner" class="spinner hidden"></span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ==================== SECCIÓN 2: PANEL CAPTURISTA ==================== -->
+  <div id="seccionCapturista" class="dashboard-container hidden">
+    
+    <div class="navbar">
+      <div>
+        <img src="https://lh3.googleusercontent.com/d/1ZpZST5pl7nQPkJRhnKLL2WNDNpEO6_3f" alt="Logo" style="height: 38px;">
+      </div>
+      <div style="text-align: right;">
+        <div class="user-greeting">
+          <span id="saludoCapturista">Hola, Usuario</span>
+          <span class="user-role-badge">Enfermería</span>
+        </div>
+        <a class="logout-btn" onclick="cerrarSesion()">Cerrar Sesión</a>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active">Capturar Nuevo</div>
+      <div class="tab" onclick="alert('El módulo de Consulta y Auditoría estará disponible en la siguiente fase.')">Consultar / Auditar</div>
+    </div>
+
+    <!-- Banner de Notificación -->
+    <div id="formAlerta" class="alerta hidden"></div>
+
+    <div class="card">
+      <h2>Registro de Atención Médica</h2>
+      <p style="font-size: 13px; color: var(--color-texto-muted); margin: 0 0 20px 0;">
+        El folio consecutivo se asignará automáticamente con candado de concurrencia.
+      </p>
+      
+      <form id="formEnfermeria" onsubmit="enviarRegistroNuevo(event)">
+        
+        <!-- Fecha y Hora -->
+        <div style="display: flex; gap: 12px;">
+          <div class="input-group" style="flex: 1;">
+            <label for="fechaIngreso">Fecha</label>
+            <input type="date" id="fechaIngreso" required>
+          </div>
+          <div class="input-group" style="flex: 1;">
+            <label for="horaEntrada">Hora de Entrada</label>
+            <input type="time" id="horaEntrada" required>
+          </div>
+        </div>
+
+        <!-- Sección del Paciente -->
+        <div class="input-group">
+          <label for="seccionPaciente">Sección / Tipo de Paciente</label>
+          <select id="seccionPaciente" required>
+            <option value="">Seleccione sección...</option>
+            <option value="Secundaria">Alumnos - Secundaria</option>
+            <option value="Preparatoria">Alumnos - Preparatoria</option>
+            <option value="Docentes">Personal Docente</option>
+            <option value="Admin">Personal Administrativo</option>
+            <option value="Publico">Público en General / Visitante</option>
+          </select>
+          <span id="lblCargandoCatalogos" class="badge-status hidden">Cargando catálogos de alumnos y personal...</span>
+        </div>
+
+        <!-- Grado y Grupo (Secundaria / Preparatoria) -->
+        <div class="input-group hidden" id="divGradoGrupo">
+          <label for="gradoGrupo">Grado y Grupo</label>
+          <select id="gradoGrupo" onchange="cargarNombresAlumnos()">
+            <option value="">Seleccione grupo...</option>
+          </select>
+        </div>
+
+        <!-- Nombre desde Catálogo -->
+        <div class="input-group hidden" id="divNombreSelect">
+          <label for="nombrePacienteSelect">Nombre del Paciente</label>
+          <select id="nombrePacienteSelect">
+            <option value="">Seleccione paciente...</option>
+          </select>
+        </div>
+
+        <!-- Nombre Manual (Público) -->
+        <div class="input-group hidden" id="divNombreInput">
+          <label for="nombrePacienteInput">Nombre Completo del Paciente</label>
+          <input type="text" id="nombrePacienteInput" placeholder="Nombre completo del paciente o visitante">
+        </div>
+
+        <!-- Edad -->
+        <div class="input-group">
+          <label for="edadPaciente">Edad (años)</label>
+          <input type="number" id="edadPaciente" placeholder="Ej. 14" min="1" max="99">
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0;">
+
+        <!-- Signos Vitales -->
+        <h3 style="font-size: 15px; margin: 0 0 12px 0; color: var(--color-primario); font-weight: 600;">
+          Signos Vitales
+        </h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(105px, 1fr)); gap: 10px;">
+          <div class="input-group">
+            <label for="sv_fc">FC (lpm)</label>
+            <input type="text" id="sv_fc" placeholder="Ej. 75">
+          </div>
+          <div class="input-group">
+            <label for="sv_fv">FR (rpm)</label>
+            <input type="text" id="sv_fv" placeholder="Ej. 18">
+          </div>
+          <div class="input-group">
+            <label for="sv_o2">SpO2 (%)</label>
+            <input type="text" id="sv_o2" placeholder="Ej. 98">
+          </div>
+          <div class="input-group">
+            <label for="sv_ta">T/A (mmHg)</label>
+            <input type="text" id="sv_ta" placeholder="Ej. 110/70">
+          </div>
+          <div class="input-group">
+            <label for="sv_temp">Temp (°C)</label>
+            <input type="text" id="sv_temp" placeholder="Ej. 36.5">
+          </div>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0;">
+
+        <!-- Motivo y Síntomas -->
+        <div class="input-group">
+          <label for="sintomaSelect">Síntoma o Motivo Principal</label>
+          <select id="sintomaSelect" onchange="verificarSintoma()" required>
+            <option value="">Seleccione síntoma...</option>
+            <option value="Cefalea (Dolor de cabeza)">Cefalea (Dolor de cabeza)</option>
+            <option value="Dolor abdominal">Dolor abdominal / estomacal</option>
+            <option value="Náuseas o Vómito">Náuseas / Vómito</option>
+            <option value="Fiebre">Fiebre</option>
+            <option value="Lesion">Lesión (Golpe, corte, caída, esguince)</option>
+            <option value="Colicos">Cólicos menstruales</option>
+            <option value="Alergia / Respiratorio">Alergia / Cuadro respiratorio</option>
+            <option value="Malestar General">Malestar General</option>
+            <option value="Otro">Otro (Especificar)</option>
+          </select>
+        </div>
+        
+        <div class="input-group hidden" id="sintomaOtroDiv">
+          <label for="sintomaOtroText">Especificar Síntoma / Motivo</label>
+          <input type="text" id="sintomaOtroText" placeholder="Detalle el síntoma...">
+        </div>
+
+        <!-- Tratamiento y Observaciones -->
+        <div class="input-group">
+          <label for="tratamiento">Tratamiento o Atención Brindada</label>
+          <textarea id="tratamiento" rows="3" placeholder="Medicamento ministrado (con autorización), curación, reposo, compresa, etc."></textarea>
+        </div>
+
+        <div class="input-group">
+          <label for="observaciones">Observaciones Adicionales / Llamada a Padres</label>
+          <textarea id="observaciones" rows="2" placeholder="Se notificó a tutor, se reincorpora a clase, etc."></textarea>
+        </div>
+
+        <!-- Hora de Salida -->
+        <div class="input-group">
+          <label for="horaSalida">Hora de Salida de Enfermería</label>
+          <input type="time" id="horaSalida">
+        </div>
+
+        <!-- Botones de Acción -->
+        <button type="submit" class="btn-primario" id="btnGuardar">
+          <span id="btnGuardarTexto">Guardar Registro</span>
+          <span id="btnGuardarSpinner" class="spinner hidden"></span>
+        </button>
+        <button type="button" class="btn-secundario" onclick="limpiarFormulario()">Limpiar Formulario</button>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- ==================== SECCIÓN 3: PANEL ADMIN JR ==================== -->
+  <div id="seccionAdminJr" class="dashboard-container hidden">
+    <div class="navbar">
+      <div>
+        <img src="https://lh3.googleusercontent.com/d/1ZpZST5pl7nQPkJRhnKLL2WNDNpEO6_3f" alt="Logo" style="height: 38px;">
+      </div>
+      <div style="text-align: right;">
+        <div class="user-greeting">
+          <span id="saludoAdmin">Hola, Admin</span>
+          <span class="user-role-badge">Dirección</span>
+        </div>
+        <a class="logout-btn" onclick="cerrarSesion()">Cerrar Sesión</a>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Panel de Control - Dirección / Admin Jr.</h2>
+      <p style="color: var(--color-texto-muted); font-size: 14px;">
+        Módulo en preparación para la Fase 2: Métricas de morbilidad escolar, exportación a Excel/PDF y trazabilidad de medicamentos controlados.
+      </p>
+    </div>
+  </div>
+
+
+  <!-- ==================== LÓGICA JAVASCRIPT ==================== -->
+  <script>
+    // Constantes de persistencia
+    const KEY_SESION = 'boston_medical_session_v2';
+    const KEY_BORRADOR = 'boston_medical_draft_v2';
+
+    // Estado global de la aplicación
+    let datosDirectorio = {
+      alumnos: {},
+      personal: { Docentes: [], Admin: [], Otros: [] }
+    };
+    let catalogosCargados = false;
+    let nombreCapturistaActual = "";
+    let rolUsuarioActual = "";
+
+    // -------------------------------------------------------------
+    // 1. GESTIÓN DE SESIÓN PERSISTENTE (MÓVILES / DESKTOP)
+    // -------------------------------------------------------------
+
+    // Auto-login al cargar la página
+    document.addEventListener('DOMContentLoaded', function() {
+      verificarSesionPersistente();
+
+      // Escuchar cambios en el formulario para guardar borrador en vivo
+      const form = document.getElementById('formEnfermeria');
+      if (form) {
+        form.addEventListener('input', guardarBorradorFormulario);
+        form.addEventListener('change', guardarBorradorFormulario);
+      }
+    });
+
+    function verificarSesionPersistente() {
+      try {
+        const raw = localStorage.getItem(KEY_SESION);
+        if (!raw) return false;
+
+        const sesion = JSON.parse(raw);
+        if (sesion && sesion.nombre && sesion.rol) {
+          // Verificar si la sesión no ha expirado (30 días de vigencia)
+          if (sesion.expiraEn && Date.now() > sesion.expiraEn) {
+            localStorage.removeItem(KEY_SESION);
+            return false;
+          }
+          activarSesion(sesion.nombre, sesion.rol);
+          return true;
+        }
+      } catch (err) {
+        console.warn("No se pudo recuperar la sesión previa:", err);
+      }
+      return false;
+    }
+
+    function activarSesion(nombre, rol) {
+      document.getElementById('seccionLogin').classList.add('hidden');
+      nombreCapturistaActual = nombre || 'Personal';
+      rolUsuarioActual = rol || 'Capturista';
+      
+      if (rolUsuarioActual === 'AdminJr' || rolUsuarioActual === 'Director') {
+        document.getElementById('seccionAdminJr').classList.remove('hidden');
+        document.getElementById('saludoAdmin').innerText = 'Hola, ' + nombreCapturistaActual;
+      } else {
+        document.getElementById('seccionCapturista').classList.remove('hidden');
+        document.getElementById('saludoCapturista').innerText = 'Hola, ' + nombreCapturistaActual;
+        prepararFormularioCapturista(); 
+        cargarCatalogosEnBackground();
+        restaurarBorradorFormulario();
+      }
+    }
+
+    function procesarLogin(e) {
+      e.preventDefault();
+      ocultarAlerta('loginAlerta');
+
+      const u = document.getElementById('user').value.trim();
+      const p = document.getElementById('pass').value.trim();
+      const recordar = document.getElementById('chkRecordarSesion').checked;
+
+      if (!u || !p) {
+        mostrarAlerta('loginAlerta', 'Por favor ingresa tu usuario y contraseña.', 'error');
+        return;
+      }
+
+      setBotonCargando('btnEntrar', 'btnEntrarTexto', 'btnLoginSpinner', true, 'Verificando credenciales...');
+
+      google.script.run
+        .withSuccessHandler(function(res) {
+          respuestaServerLogin(res, recordar);
+        })
+        .withFailureHandler(function(error) {
+          setBotonCargando('btnEntrar', 'btnEntrarTexto', 'btnLoginSpinner', false, 'Entrar');
+          mostrarAlerta('loginAlerta', 'Error de conexión con el servidor: ' + (error.message || error), 'error');
+        })
+        .verificarLogin(u, p);
+    }
+
+    function respuestaServerLogin(res, recordar) {
+      setBotonCargando('btnEntrar', 'btnEntrarTexto', 'btnLoginSpinner', false, 'Entrar');
+
+      if (res && res.exito) {
+        // Guardar sesión persistente si el usuario lo marcó
+        if (recordar) {
+          const sesion = {
+            usuario: res.usuario || '',
+            nombre: res.nombre || '',
+            rol: res.rol || '',
+            guardadoEn: Date.now(),
+            expiraEn: Date.now() + (30 * 24 * 60 * 60 * 1000) // 30 días de persistencia
+          };
+          try {
+            localStorage.setItem(KEY_SESION, JSON.stringify(sesion));
+          } catch(e) {
+            console.warn("No se pudo escribir en localStorage:", e);
+          }
+        }
+
+        activarSesion(res.nombre, res.rol);
+      } else {
+        const msg = (res && res.mensaje) ? res.mensaje : 'Usuario o contraseña incorrectos.';
+        mostrarAlerta('loginAlerta', msg, 'error');
+        document.getElementById('pass').value = '';
+        document.getElementById('pass').focus();
+      }
+    }
+
+    function cerrarSesion() {
+      try {
+        localStorage.removeItem(KEY_SESION);
+        limpiarBorradorFormulario();
+      } catch(e) {}
+
+      document.getElementById('seccionCapturista').classList.add('hidden');
+      document.getElementById('seccionAdminJr').classList.add('hidden');
+      document.getElementById('loginForm').reset();
+      limpiarFormulario();
+      ocultarAlerta('loginAlerta');
+      ocultarAlerta('formAlerta');
+      document.getElementById('seccionLogin').classList.remove('hidden');
+      nombreCapturistaActual = "";
+      rolUsuarioActual = "";
+    }
+
+    // -------------------------------------------------------------
+    // 2. RECUPERACIÓN DE BORRADOR ANTE CIERRES ACCIDENTALES
+    // -------------------------------------------------------------
+    function guardarBorradorFormulario() {
+      try {
+        const borrador = {
+          seccion: document.getElementById('seccionPaciente').value,
+          gradoGrupo: document.getElementById('gradoGrupo').value,
+          nombreInput: document.getElementById('nombrePacienteInput').value,
+          edad: document.getElementById('edadPaciente').value,
+          fc: document.getElementById('sv_fc').value,
+          fv: document.getElementById('sv_fv').value,
+          o2: document.getElementById('sv_o2').value,
+          ta: document.getElementById('sv_ta').value,
+          temp: document.getElementById('sv_temp').value,
+          sintoma: document.getElementById('sintomaSelect').value,
+          sintomaOtro: document.getElementById('sintomaOtroText').value,
+          tratamiento: document.getElementById('tratamiento').value,
+          observaciones: document.getElementById('observaciones').value,
+          horaSalida: document.getElementById('horaSalida').value
+        };
+        sessionStorage.setItem(KEY_BORRADOR, JSON.stringify(borrador));
+      } catch(e) {}
+    }
+
+    function restaurarBorradorFormulario() {
+      try {
+        const raw = sessionStorage.getItem(KEY_BORRADOR);
+        if (!raw) return;
+        const b = JSON.parse(raw);
+        if (!b) return;
+
+        if (b.seccion) {
+          document.getElementById('seccionPaciente').value = b.seccion;
+          actualizarSeccionUI(b.seccion);
+        }
+        if (b.nombreInput) document.getElementById('nombrePacienteInput').value = b.nombreInput;
+        if (b.edad) document.getElementById('edadPaciente').value = b.edad;
+        if (b.fc) document.getElementById('sv_fc').value = b.fc;
+        if (b.fv) document.getElementById('sv_fv').value = b.fv;
+        if (b.o2) document.getElementById('sv_o2').value = b.o2;
+        if (b.ta) document.getElementById('sv_ta').value = b.ta;
+        if (b.temp) document.getElementById('sv_temp').value = b.temp;
+        if (b.sintoma) {
+          document.getElementById('sintomaSelect').value = b.sintoma;
+          verificarSintoma();
+        }
+        if (b.sintomaOtro) document.getElementById('sintomaOtroText').value = b.sintomaOtro;
+        if (b.tratamiento) document.getElementById('tratamiento').value = b.tratamiento;
+        if (b.observaciones) document.getElementById('observaciones').value = b.observaciones;
+        if (b.horaSalida) document.getElementById('horaSalida').value = b.horaSalida;
+      } catch(e) {}
+    }
+
+    function limpiarBorradorFormulario() {
+      try {
+        sessionStorage.removeItem(KEY_BORRADOR);
+      } catch(e) {}
+    }
+
+    // -------------------------------------------------------------
+    // 2. CARGA DE CATÁLOGOS DINÁMICOS
+    // -------------------------------------------------------------
+    function cargarCatalogosEnBackground() {
+      if (catalogosCargados) return;
+
+      const lbl = document.getElementById('lblCargandoCatalogos');
+      if (lbl) lbl.classList.remove('hidden');
+
+      google.script.run
+        .withSuccessHandler(function(res) {
+          if (lbl) lbl.classList.add('hidden');
+          if (res && res.exito !== false) {
+            datosDirectorio = {
+              alumnos: res.alumnos || {},
+              personal: res.personal || { Docentes: [], Admin: [], Otros: [] }
+            };
+            catalogosCargados = true;
+
+            // Si el usuario ya había seleccionado una sección mientras cargaba, refrescar lista
+            const seccionActual = document.getElementById('seccionPaciente').value;
+            if (seccionActual) {
+              actualizarSeccionUI(seccionActual);
+            }
+          }
+        })
+        .withFailureHandler(function(err) {
+          if (lbl) {
+            lbl.innerText = 'No se pudieron cargar catálogos dinámicos.';
+            lbl.style.color = '#dc2626';
+          }
+          console.error("Error al cargar catálogos:", err);
+        })
+        .obtenerCatalogos();
+    }
+
+    // -------------------------------------------------------------
+    // 3. CONTROL DEL FORMULARIO Y SECCIONES
+    // -------------------------------------------------------------
+    function prepararFormularioCapturista() {
+      const ahora = new Date();
+      const año = ahora.getFullYear();
+      const mes = String(ahora.getMonth() + 1).padStart(2, '0');
+      const dia = String(ahora.getDate()).padStart(2, '0');
+      document.getElementById('fechaIngreso').value = `${año}-${mes}-${dia}`;
+
+      const horas = String(ahora.getHours()).padStart(2, '0');
+      const minutos = String(ahora.getMinutes()).padStart(2, '0');
+      document.getElementById('horaEntrada').value = `${horas}:${minutos}`;
+    }
+
+    function limpiarFormulario() {
+      limpiarBorradorFormulario();
+      document.getElementById('formEnfermeria').reset();
+      
+      // Ocultar selectores dependientes
+      document.getElementById('divGradoGrupo').classList.add('hidden');
+      document.getElementById('divNombreSelect').classList.add('hidden');
+      document.getElementById('divNombreInput').classList.add('hidden');
+      document.getElementById('sintomaOtroDiv').classList.add('hidden');
+      
+      // Limpiar selects
+      document.getElementById('gradoGrupo').innerHTML = '<option value="">Seleccione grupo...</option>';
+      document.getElementById('nombrePacienteSelect').innerHTML = '<option value="">Seleccione paciente...</option>';
+      document.getElementById('nombrePacienteInput').value = '';
+      document.getElementById('sintomaOtroText').required = false;
+
+      prepararFormularioCapturista();
+    }
+
+    document.getElementById('seccionPaciente').addEventListener('change', function() {
+      actualizarSeccionUI(this.value);
+    });
+
+    function actualizarSeccionUI(seccion) {
+      const divGrupo = document.getElementById('divGradoGrupo');
+      const selGrupo = document.getElementById('gradoGrupo');
+      const divNomSel = document.getElementById('divNombreSelect');
+      const divNomInp = document.getElementById('divNombreInput');
+      const inpNombre = document.getElementById('nombrePacienteInput');
+      const selNombre = document.getElementById('nombrePacienteSelect');
+      
+      divGrupo.classList.add('hidden');
+      divNomSel.classList.add('hidden');
+      divNomInp.classList.add('hidden');
+      inpNombre.required = false;
+      selNombre.required = false;
+
+      selGrupo.innerHTML = '<option value="">Seleccione grupo...</option>';
+      selNombre.innerHTML = '<option value="">Seleccione paciente...</option>';
+      inpNombre.value = '';
+
+      if (seccion === 'Secundaria' || seccion === 'Preparatoria') {
+        divGrupo.classList.remove('hidden');
+        divNomSel.classList.remove('hidden');
+        selNombre.required = true;
+        
+        if (datosDirectorio.alumnos && datosDirectorio.alumnos[seccion]) {
+          const grupos = Object.keys(datosDirectorio.alumnos[seccion]).sort();
+          grupos.forEach(g => {
+            const opt = document.createElement('option');
+            opt.value = g;
+            opt.textContent = g;
+            selGrupo.appendChild(opt);
+          });
+        }
+      } 
+      else if (seccion === 'Docentes' || seccion === 'Admin') {
+        divNomSel.classList.remove('hidden');
+        selNombre.required = true;
+        
+        const personal = datosDirectorio.personal || { Docentes: [], Admin: [] };
+        const listaNombres = (seccion === 'Docentes') ? personal.Docentes : personal.Admin;
+        llenarListaNombres(listaNombres || []);
+      }
+      else if (seccion === 'Publico') {
+        divNomInp.classList.remove('hidden');
+        inpNombre.required = true;
+      }
+    }
+
+    function cargarNombresAlumnos() {
+      const seccion = document.getElementById('seccionPaciente').value;
+      const grupo = document.getElementById('gradoGrupo').value;
+      
+      if (seccion && grupo && datosDirectorio.alumnos && datosDirectorio.alumnos[seccion] && datosDirectorio.alumnos[seccion][grupo]) {
+        llenarListaNombres(datosDirectorio.alumnos[seccion][grupo]);
+      } else {
+        document.getElementById('nombrePacienteSelect').innerHTML = '<option value="">Seleccione paciente...</option>';
+      }
+    }
+
+    function llenarListaNombres(arreglo) {
+      const select = document.getElementById('nombrePacienteSelect');
+      select.innerHTML = '<option value="">Seleccione paciente...</option>';
+      if (Array.isArray(arreglo) && arreglo.length > 0) {
+        arreglo.forEach(nombre => {
+          const opt = document.createElement('option');
+          opt.value = nombre;
+          opt.textContent = nombre;
+          select.appendChild(opt);
+        });
+      }
+    }
+
+    function verificarSintoma() {
+      const select = document.getElementById('sintomaSelect');
+      const divOtro = document.getElementById('sintomaOtroDiv');
+      const txtOtro = document.getElementById('sintomaOtroText');
+
+      if (select.value === 'Otro') {
+        divOtro.classList.remove('hidden');
+        txtOtro.required = true;
+        txtOtro.focus();
+      } else {
+        divOtro.classList.add('hidden');
+        txtOtro.value = ''; 
+        txtOtro.required = false;
+      }
+    }
+
+    // -------------------------------------------------------------
+    // 4. ENVÍO Y GUARDADO SEGURO DE REGISTRO
+    // -------------------------------------------------------------
+    function enviarRegistroNuevo(e) {
+      e.preventDefault();
+      ocultarAlerta('formAlerta');
+
+      const seccion = document.getElementById('seccionPaciente').value;
+      let nombreFinal = "";
+
+      if (seccion === 'Publico') {
+        nombreFinal = document.getElementById('nombrePacienteInput').value.trim();
+      } else {
+        nombreFinal = document.getElementById('nombrePacienteSelect').value.trim();
+      }
+
+      if (!nombreFinal) {
+        mostrarAlerta('formAlerta', 'Por favor selecciona o escribe el nombre completo del paciente.', 'error');
+        return;
+      }
+
+      // Preparación del payload sanitizado
+      const datos = {
+        fechaIngreso: document.getElementById('fechaIngreso').value,
+        horaEntrada: document.getElementById('horaEntrada').value,
+        nombreCapturista: nombreCapturistaActual,
+        seccion: seccion,
+        gradoGrupo: document.getElementById('gradoGrupo').value || 'N/A',
+        nombrePaciente: nombreFinal,
+        edad: document.getElementById('edadPaciente').value || '',
+        fc: document.getElementById('sv_fc').value.trim(),
+        fv: document.getElementById('sv_fv').value.trim(),
+        o2: document.getElementById('sv_o2').value.trim(),
+        ta: document.getElementById('sv_ta').value.trim(),
+        temp: document.getElementById('sv_temp').value.trim(),
+        sintoma: document.getElementById('sintomaSelect').value,
+        sintomaOtro: document.getElementById('sintomaOtroText').value.trim(),
+        tratamiento: document.getElementById('tratamiento').value.trim(),
+        observaciones: document.getElementById('observaciones').value.trim(),
+        horaSalida: document.getElementById('horaSalida').value || '',
+        estatus: 'Activo'
+      };
+
+      setBotonCargando('btnGuardar', 'btnGuardarTexto', 'btnGuardarSpinner', true, 'Guardando en Base de Datos...');
+
+      google.script.run
+        .withSuccessHandler(function(respuesta) {
+          setBotonCargando('btnGuardar', 'btnGuardarTexto', 'btnGuardarSpinner', false, 'Guardar Registro');
+
+          // Soporta tanto string directo como objeto { exito, folio, mensaje }
+          const exito = (typeof respuesta === 'object' && respuesta !== null) ? respuesta.exito : true;
+          const folio = (typeof respuesta === 'object' && respuesta !== null) ? (respuesta.folio || '') : respuesta;
+          const mensaje = (typeof respuesta === 'object' && respuesta !== null) ? respuesta.mensaje : `Registro ${folio} guardado exitosamente.`;
+
+          if (exito) {
+            mostrarAlerta('formAlerta', `✅ ¡Registro guardado exitosamente! Folio asignado: <strong>${folio}</strong>`, 'exito');
+            limpiarBorradorFormulario();
+            limpiarFormulario();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          } else {
+            mostrarAlerta('formAlerta', '⚠️ Error al guardar: ' + mensaje, 'error');
+          }
+        })
+        .withFailureHandler(function(error) {
+          setBotonCargando('btnGuardar', 'btnGuardarTexto', 'btnGuardarSpinner', false, 'Guardar Registro');
+          mostrarAlerta('formAlerta', '❌ Ocurrió un error en el servidor: ' + (error.message || error), 'error');
+        })
+        .guardarRegistroNuevo(datos);
+    }
+
+    // -------------------------------------------------------------
+    // 5. HELPERS DE UI Y FEEDBACK VISUAL
+    // -------------------------------------------------------------
+    function setBotonCargando(btnId, textoId, spinnerId, cargando, texto) {
+      const btn = document.getElementById(btnId);
+      const spanTexto = document.getElementById(textoId);
+      const spinner = document.getElementById(spinnerId);
+
+      btn.disabled = cargando;
+      spanTexto.innerText = texto;
+      if (cargando) {
+        spinner.classList.remove('hidden');
+      } else {
+        spinner.classList.add('hidden');
+      }
+    }
+
+    function mostrarAlerta(idElemento, mensaje, tipo) {
+      const el = document.getElementById(idElemento);
+      el.className = 'alerta alerta-' + tipo;
+      el.innerHTML = mensaje;
+      el.classList.remove('hidden');
+    }
+
+    function ocultarAlerta(idElemento) {
+      const el = document.getElementById(idElemento);
+      el.classList.add('hidden');
+    }
+  </script>
+</body>
+</html>
