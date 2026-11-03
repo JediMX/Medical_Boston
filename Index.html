@@ -346,9 +346,11 @@
 
         <form id="loginForm" onsubmit="procesarLogin(event)">
           <div class="input-group">
-            <label for="user">Usuario</label>
+            <label for="user">Usuario Autorizado</label>
             <svg class="icon" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-            <input type="text" id="user" class="login-input" placeholder="Ingresa tu usuario" autocomplete="username" required>
+            <select id="user" class="login-input" style="cursor: pointer;" required onchange="if(this.value) document.getElementById('pass').focus();">
+              <option value="">Cargando usuarios autorizados...</option>
+            </select>
           </div>
 
           <div class="input-group">
@@ -570,6 +572,7 @@
     // Constantes de persistencia
     const KEY_SESION = 'boston_medical_session_v2';
     const KEY_BORRADOR = 'boston_medical_draft_v2';
+    const KEY_USUARIOS_CACHE = 'boston_medical_users_cache_v1';
 
     // Estado global de la aplicación
     let datosDirectorio = {
@@ -581,12 +584,15 @@
     let rolUsuarioActual = "";
 
     // -------------------------------------------------------------
-    // 1. GESTIÓN DE SESIÓN PERSISTENTE (MÓVILES / DESKTOP)
+    // 1. GESTIÓN DE SESIÓN PERSISTENTE Y SELECTOR DE USUARIOS
     // -------------------------------------------------------------
 
-    // Auto-login al cargar la página
+    // Auto-login al cargar la página o cargar selector de usuarios
     document.addEventListener('DOMContentLoaded', function() {
-      verificarSesionPersistente();
+      const sesionActiva = verificarSesionPersistente();
+      if (!sesionActiva) {
+        cargarUsuariosLogin();
+      }
 
       // Escuchar cambios en el formulario para guardar borrador en vivo
       const form = document.getElementById('formEnfermeria');
@@ -595,6 +601,61 @@
         form.addEventListener('change', guardarBorradorFormulario);
       }
     });
+
+    // Carga dinámica de la lista de usuarios autorizados
+    function cargarUsuariosLogin() {
+      const sel = document.getElementById('user');
+      if (!sel) return;
+
+      // 1. Mostrar de inmediato la lista en caché si existe (cero latencia)
+      try {
+        const cache = localStorage.getItem(KEY_USUARIOS_CACHE);
+        if (cache) {
+          const listaCache = JSON.parse(cache);
+          if (Array.isArray(listaCache) && listaCache.length > 0) {
+            poblarSelectorUsuarios(listaCache);
+          }
+        }
+      } catch(e) {}
+
+      // 2. Sincronizar en segundo plano con la base de datos de Sheets
+      google.script.run
+        .withSuccessHandler(function(res) {
+          if (res && res.exito && Array.isArray(res.usuarios) && res.usuarios.length > 0) {
+            poblarSelectorUsuarios(res.usuarios);
+            try {
+              localStorage.setItem(KEY_USUARIOS_CACHE, JSON.stringify(res.usuarios));
+            } catch(e) {}
+          }
+        })
+        .withFailureHandler(function(err) {
+          console.warn("No se pudo actualizar lista de usuarios desde el servidor:", err);
+          if (sel.options.length <= 1) {
+            sel.innerHTML = '<option value="">Error al cargar usuarios autorizados</option>';
+          }
+        })
+        .obtenerUsuariosDisponibles();
+    }
+
+    function poblarSelectorUsuarios(lista) {
+      const sel = document.getElementById('user');
+      if (!sel) return;
+
+      const valorActual = sel.value;
+      sel.innerHTML = '<option value="">Selecciona tu usuario...</option>';
+
+      lista.forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item.usuario;
+        const texto = item.nombre ? `${item.nombre} (${item.usuario})` : item.usuario;
+        opt.textContent = texto;
+        sel.appendChild(opt);
+      });
+
+      if (valorActual) {
+        sel.value = valorActual;
+      }
+    }
 
     function verificarSesionPersistente() {
       try {
@@ -642,8 +703,15 @@
       const p = document.getElementById('pass').value.trim();
       const recordar = document.getElementById('chkRecordarSesion').checked;
 
-      if (!u || !p) {
-        mostrarAlerta('loginAlerta', 'Por favor ingresa tu usuario y contraseña.', 'error');
+      if (!u) {
+        mostrarAlerta('loginAlerta', 'Por favor selecciona tu usuario de la lista.', 'error');
+        document.getElementById('user').focus();
+        return;
+      }
+
+      if (!p) {
+        mostrarAlerta('loginAlerta', 'Por favor ingresa tu contraseña.', 'error');
+        document.getElementById('pass').focus();
         return;
       }
 
@@ -682,7 +750,7 @@
 
         activarSesion(res.nombre, res.rol);
       } else {
-        const msg = (res && res.mensaje) ? res.mensaje : 'Usuario o contraseña incorrectos.';
+        const msg = (res && res.mensaje) ? res.mensaje : 'Contraseña incorrecta.';
         mostrarAlerta('loginAlerta', msg, 'error');
         document.getElementById('pass').value = '';
         document.getElementById('pass').focus();
@@ -702,6 +770,7 @@
       ocultarAlerta('loginAlerta');
       ocultarAlerta('formAlerta');
       document.getElementById('seccionLogin').classList.remove('hidden');
+      cargarUsuariosLogin();
       nombreCapturistaActual = "";
       rolUsuarioActual = "";
     }

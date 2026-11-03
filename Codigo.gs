@@ -26,6 +26,48 @@ function include(filename) {
 // ==========================================
 // 2. SISTEMA DE LOGIN Y AUTENTICACIÓN
 // ==========================================
+
+// Obtener usuarios autorizados para el selector de Login (evita errores tipográficos)
+function obtenerUsuariosDisponibles() {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const hojaUsuarios = ss.getSheetByName('Usuarios');
+
+    if (!hojaUsuarios) {
+      return { exito: false, mensaje: 'No existe la hoja "Usuarios".', usuarios: [] };
+    }
+
+    const datos = hojaUsuarios.getDataRange().getValues();
+    if (datos.length <= 1) {
+      return { exito: false, mensaje: 'No hay usuarios registrados.', usuarios: [] };
+    }
+
+    const lista = [];
+    // Omitir encabezados (fila 1 / índice 0)
+    for (let i = 1; i < datos.length; i++) {
+      const fila = datos[i];
+      const usuario = fila[0] ? fila[0].toString().trim() : '';
+      const rol = fila[2] ? fila[2].toString().trim() : 'Capturista';
+      const nombre = fila[3] ? fila[3].toString().trim() : usuario;
+
+      if (usuario) {
+        lista.push({
+          usuario: usuario,
+          nombre: nombre,
+          rol: rol
+        });
+      }
+    }
+
+    // Ordenar alfabéticamente por nombre para facilitar la búsqueda
+    lista.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+
+    return { exito: true, usuarios: lista };
+  } catch (error) {
+    return { exito: false, mensaje: 'Error al consultar usuarios: ' + error.message, usuarios: [] };
+  }
+}
+
 function verificarLogin(usuario, password) {
   try {
     if (!usuario || !password) {
