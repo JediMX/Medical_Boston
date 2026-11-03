@@ -9,11 +9,11 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="Boston Medical">
+  <meta name="apple-mobile-web-app-title" content="UPA Boston">
   <meta name="theme-color" content="#0b1f3f">
 
-  <title>Boston Medical Record | Colegio Boston</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <title>UPA - Unidad de Primeros Auxilios | Colegio Boston</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
   <style>
     :root {
@@ -21,6 +21,8 @@
       --color-primario: #0b1f3f;       /* Azul marino institucional Boston */
       --color-primario-hover: #143263;
       --color-dorado: #c59b27;
+      --color-dorado-brillante: #f3d068;
+      --color-rojo-boston: #c83e2b;
       --color-texto: #2d3748;
       --color-texto-muted: #718096;
       --color-borde: #cbd5e1;
@@ -54,7 +56,7 @@
 
     .container {
       width: 100%;
-      max-width: 400px;
+      max-width: 440px;
       margin: 0 auto;
       text-align: center;
     }
@@ -65,11 +67,118 @@
       margin: 0 auto;
     }
 
-    .logo {
-      width: 130px;
+    /* ==============================================================
+       BANNER INSTITUCIONAL BOSTON UPA
+       Colores: Azul Marino, Dorado, Rojo, Franjas y Leona traslúcida
+       ============================================================== */
+    .banner-boston {
+      position: relative;
+      background: linear-gradient(135deg, #06152b 0%, #0c2340 50%, #112e56 100%);
+      border-radius: var(--radio-tarjeta);
+      overflow: hidden;
+      margin-bottom: 22px;
+      box-shadow: 0 14px 28px rgba(11, 31, 63, 0.25), 0 4px 10px rgba(11, 31, 63, 0.15);
+      border: 1.5px solid rgba(222, 176, 38, 0.45);
+    }
+
+    /* Franja superior dorada */
+    .banner-franja-dorada {
+      height: 4px;
+      background: linear-gradient(90deg, #c59b27, #f3d068, #deb026, #c59b27);
+      width: 100%;
+    }
+
+    /* Fondo traslúcido con la Leona / Escudo Boston */
+    .banner-watermark {
+      position: absolute;
+      right: -25px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 220px;
+      height: 220px;
+      background-image: url('https://lh3.googleusercontent.com/d/1ZpZST5pl7nQPkJRhnKLL2WNDNpEO6_3f');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      opacity: 0.18;
+      pointer-events: none;
+      filter: drop-shadow(0 0 8px rgba(255,255,255,0.2));
+      z-index: 1;
+    }
+
+    /* Contenido del Banner */
+    .banner-content {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 22px 20px;
+      text-align: left;
+    }
+
+    .banner-escudo {
+      width: 82px;
       height: auto;
-      margin-bottom: 12px;
-      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.06));
+      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.6));
+      flex-shrink: 0;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 6px;
+      border-radius: 12px;
+      border: 1px solid rgba(222, 176, 38, 0.35);
+    }
+
+    .banner-textos {
+      flex: 1;
+    }
+
+    .banner-institucion {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2.2px;
+      color: var(--color-dorado-brillante);
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+
+    .banner-siglas {
+      font-size: 28px;
+      font-weight: 800;
+      color: #ffffff;
+      margin: 0;
+      line-height: 1.1;
+      letter-spacing: 0.5px;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+    }
+
+    .banner-titulo {
+      font-size: 14px;
+      font-weight: 600;
+      color: #f1f5f9;
+      margin-top: 3px;
+      line-height: 1.25;
+    }
+
+    .banner-sub {
+      font-size: 11px;
+      color: #cbd5e1;
+      margin-top: 4px;
+      font-weight: 400;
+    }
+
+    /* Franjas del Boston (Rojo y Blanco con ribete dorado) */
+    .banner-franjas-boston {
+      height: 7px;
+      width: 100%;
+      background: repeating-linear-gradient(
+        90deg,
+        #c83e2b 0px,
+        #c83e2b 14px,
+        #ffffff 14px,
+        #ffffff 28px
+      );
+      border-top: 1.5px solid #deb026;
     }
 
     h1 {
@@ -220,6 +329,40 @@
       box-shadow: 0 4px 6px -1px rgba(0,0,0,0.03);
     }
 
+    .navbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-align: left;
+    }
+
+    .navbar-logo {
+      height: 44px;
+      width: auto;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+    }
+
+    .navbar-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--color-primario);
+      line-height: 1.2;
+    }
+
+    .navbar-subtitle {
+      font-size: 11px;
+      color: var(--color-dorado);
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .badge-upa {
+      background: #fef3c7 !important;
+      color: #92400e !important;
+      border: 1px solid #fde68a !important;
+    }
+
     .user-greeting {
       font-size: 14px;
       color: var(--color-texto);
@@ -337,9 +480,22 @@
   <!-- ==================== SECCIÓN 1: LOGIN ==================== -->
   <div id="seccionLogin" class="centrado">
     <div class="container">
-      <img src="https://lh3.googleusercontent.com/d/1ZpZST5pl7nQPkJRhnKLL2WNDNpEO6_3f" alt="Logo Colegio Boston" class="logo">
-      <h1>Boston Medical Record</h1>
-      <div class="subtitulo-app">Sistema de Registro Clínico y Enfermería</div>
+      
+      <!-- Banner Institucional UPA Colegio Boston (Dorado, Azul Marino, Rojo y Leona traslúcida) -->
+      <div class="banner-boston">
+        <div class="banner-franja-dorada"></div>
+        <div class="banner-watermark"></div>
+        <div class="banner-content">
+          <img src="https://lh3.googleusercontent.com/d/1ZpZST5pl7nQPkJRhnKLL2WNDNpEO6_3f" alt="Escudo Colegio Boston" class="banner-escudo">
+          <div class="banner-textos">
+            <span class="banner-institucion">COLEGIO BOSTON</span>
+            <h1 class="banner-siglas">UPA</h1>
+            <div class="banner-titulo">Unidad de Primeros Auxilios</div>
+            <div class="banner-sub">Control y Atención Médica Escolar</div>
+          </div>
+        </div>
+        <div class="banner-franjas-boston"></div>
+      </div>
 
       <div class="card">
         <div id="loginAlerta" class="alerta alerta-error hidden"></div>
@@ -368,7 +524,7 @@
           </div>
 
           <button type="submit" class="btn-primario" id="btnEntrar">
-            <span id="btnEntrarTexto">Entrar</span>
+            <span id="btnEntrarTexto">Entrar a UPA</span>
             <span id="btnLoginSpinner" class="spinner hidden"></span>
           </button>
         </form>
@@ -381,13 +537,17 @@
   <div id="seccionCapturista" class="dashboard-container hidden">
     
     <div class="navbar">
-      <div>
-        <img src="https://lh3.googleusercontent.com/d/1ZpZST5pl7nQPkJRhnKLL2WNDNpEO6_3f" alt="Logo" style="height: 38px;">
+      <div class="navbar-brand">
+        <img src="https://lh3.googleusercontent.com/d/1ZpZST5pl7nQPkJRhnKLL2WNDNpEO6_3f" alt="Escudo Boston" class="navbar-logo">
+        <div>
+          <div class="navbar-title">UPA • Unidad de Primeros Auxilios</div>
+          <div class="navbar-subtitle">Colegio Boston</div>
+        </div>
       </div>
       <div style="text-align: right;">
         <div class="user-greeting">
           <span id="saludoCapturista">Hola, Usuario</span>
-          <span class="user-role-badge">Enfermería</span>
+          <span class="user-role-badge badge-upa">Personal UPA</span>
         </div>
         <a class="logout-btn" onclick="cerrarSesion()">Cerrar Sesión</a>
       </div>
@@ -402,9 +562,9 @@
     <div id="formAlerta" class="alerta hidden"></div>
 
     <div class="card">
-      <h2>Registro de Atención Médica</h2>
+      <h2>Registro de Atención - UPA</h2>
       <p style="font-size: 13px; color: var(--color-texto-muted); margin: 0 0 20px 0;">
-        El folio consecutivo se asignará automáticamente con candado de concurrencia.
+        El folio correlativo (UPA-XXXX) se asignará automáticamente al guardar con candado de concurrencia.
       </p>
       
       <form id="formEnfermeria" onsubmit="enviarRegistroNuevo(event)">
@@ -529,13 +689,13 @@
 
         <!-- Hora de Salida -->
         <div class="input-group">
-          <label for="horaSalida">Hora de Salida de Enfermería</label>
+          <label for="horaSalida">Hora de Salida de UPA</label>
           <input type="time" id="horaSalida">
         </div>
 
         <!-- Botones de Acción -->
         <button type="submit" class="btn-primario" id="btnGuardar">
-          <span id="btnGuardarTexto">Guardar Registro</span>
+          <span id="btnGuardarTexto">Guardar Atención UPA</span>
           <span id="btnGuardarSpinner" class="spinner hidden"></span>
         </button>
         <button type="button" class="btn-secundario" onclick="limpiarFormulario()">Limpiar Formulario</button>
@@ -547,19 +707,23 @@
   <!-- ==================== SECCIÓN 3: PANEL ADMIN JR ==================== -->
   <div id="seccionAdminJr" class="dashboard-container hidden">
     <div class="navbar">
-      <div>
-        <img src="https://lh3.googleusercontent.com/d/1ZpZST5pl7nQPkJRhnKLL2WNDNpEO6_3f" alt="Logo" style="height: 38px;">
+      <div class="navbar-brand">
+        <img src="https://lh3.googleusercontent.com/d/1ZpZST5pl7nQPkJRhnKLL2WNDNpEO6_3f" alt="Escudo Boston" class="navbar-logo">
+        <div>
+          <div class="navbar-title">UPA • Dirección y Auditoría</div>
+          <div class="navbar-subtitle">Colegio Boston</div>
+        </div>
       </div>
       <div style="text-align: right;">
         <div class="user-greeting">
           <span id="saludoAdmin">Hola, Admin</span>
-          <span class="user-role-badge">Dirección</span>
+          <span class="user-role-badge">Dirección UPA</span>
         </div>
         <a class="logout-btn" onclick="cerrarSesion()">Cerrar Sesión</a>
       </div>
     </div>
     <div class="card">
-      <h2>Panel de Control - Dirección / Admin Jr.</h2>
+      <h2>Panel de Control - Dirección / Auditoría UPA</h2>
       <p style="color: var(--color-texto-muted); font-size: 14px;">
         Módulo en preparación para la Fase 2: Métricas de morbilidad escolar, exportación a Excel/PDF y trazabilidad de medicamentos controlados.
       </p>
@@ -1043,15 +1207,15 @@
 
       google.script.run
         .withSuccessHandler(function(respuesta) {
-          setBotonCargando('btnGuardar', 'btnGuardarTexto', 'btnGuardarSpinner', false, 'Guardar Registro');
+          setBotonCargando('btnGuardar', 'btnGuardarTexto', 'btnGuardarSpinner', false, 'Guardar Atención UPA');
 
           // Soporta tanto string directo como objeto { exito, folio, mensaje }
           const exito = (typeof respuesta === 'object' && respuesta !== null) ? respuesta.exito : true;
           const folio = (typeof respuesta === 'object' && respuesta !== null) ? (respuesta.folio || '') : respuesta;
-          const mensaje = (typeof respuesta === 'object' && respuesta !== null) ? respuesta.mensaje : `Registro ${folio} guardado exitosamente.`;
+          const mensaje = (typeof respuesta === 'object' && respuesta !== null) ? respuesta.mensaje : `Atención ${folio} guardada exitosamente.`;
 
           if (exito) {
-            mostrarAlerta('formAlerta', `✅ ¡Registro guardado exitosamente! Folio asignado: <strong>${folio}</strong>`, 'exito');
+            mostrarAlerta('formAlerta', `✅ ¡Atención médica guardada exitosamente! Folio UPA asignado: <strong>${folio}</strong>`, 'exito');
             limpiarBorradorFormulario();
             limpiarFormulario();
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1060,7 +1224,7 @@
           }
         })
         .withFailureHandler(function(error) {
-          setBotonCargando('btnGuardar', 'btnGuardarTexto', 'btnGuardarSpinner', false, 'Guardar Registro');
+          setBotonCargando('btnGuardar', 'btnGuardarTexto', 'btnGuardarSpinner', false, 'Guardar Atención UPA');
           mostrarAlerta('formAlerta', '❌ Ocurrió un error en el servidor: ' + (error.message || error), 'error');
         })
         .guardarRegistroNuevo(datos);

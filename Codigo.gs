@@ -1,5 +1,5 @@
 // ============================================================================
-// BOSTON MEDICAL RECORD - SISTEMA DE REGISTRO CLÍNICO Y ENFERMERÍA
+// BOSTON MEDICAL RECORD - UPA: UNIDAD DE PRIMEROS AUXILIOS
 // Colegio Boston - Cuernavaca, Morelos
 // ============================================================================
 
@@ -10,7 +10,7 @@ function doGet() {
   try {
     return HtmlService.createTemplateFromFile('Index')
       .evaluate()
-      .setTitle('Boston Medical Record | Colegio Boston')
+      .setTitle('UPA - Unidad de Primeros Auxilios | Colegio Boston')
       .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no')
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   } catch (error) {
@@ -205,44 +205,45 @@ function guardarRegistroNuevo(datos) {
     lock.waitLock(20000);
 
     const ss = SpreadsheetApp.getActiveSpreadsheet();
-    let hoja = ss.getSheetByName('Registro_Enfermeria');
+    // Prioridad a 'Registro_UPA', manteniendo compatibilidad si existe 'Registro_Enfermeria'
+    let hoja = ss.getSheetByName('Registro_UPA') || ss.getSheetByName('Registro_Enfermeria');
 
-    // Si la hoja no existe, se crea con sus encabezados oficiales
+    // Si la hoja no existe, se crea con el nombre oficial Registro_UPA y encabezados
     if (!hoja) {
-      hoja = ss.insertSheet('Registro_Enfermeria');
+      hoja = ss.insertSheet('Registro_UPA');
       hoja.appendRow([
-        'Folio',
+        'Folio UPA',
         'Fecha Ingreso',
         'Hora Entrada',
-        'Capturista',
+        'Responsable UPA',
         'Sección',
         'Grado y Grupo',
         'Nombre Paciente',
         'Edad',
         'FC',
-        'FR', // Corregido FV por FR (Frecuencia Respiratoria habitual en clínica)
+        'FR', // Frecuencia Respiratoria
         'SpO2 (%)',
         'T/A',
         'Temp (°C)',
         'Síntoma Principal',
         'Síntoma Detalle / Otro',
-        'Tratamiento Aplicado',
+        'Tratamiento / Primeros Auxilios',
         'Observaciones',
         'Hora Salida',
         'Estatus'
       ]);
     }
 
-    // --- Generación Robusta de Folio Consecutivo ---
+    // --- Generación Robusta de Folio Consecutivo UPA-XXXX ---
     const ultimaFila = hoja.getLastRow();
     let nuevoNumero = 1;
 
     if (ultimaFila > 1) {
-      // Buscar el último folio registrado en la columna A
+      // Buscar el último folio registrado en la columna A (compatible con UPA-XXXX y previos ENF-XXXX)
       const valoresFolios = hoja.getRange(2, 1, ultimaFila - 1, 1).getValues();
       for (let i = valoresFolios.length - 1; i >= 0; i--) {
         const celda = valoresFolios[i][0] ? valoresFolios[i][0].toString() : '';
-        const match = celda.match(/ENF-(\d+)/);
+        const match = celda.match(/(?:UPA|ENF)-(\d+)/i);
         if (match) {
           nuevoNumero = parseInt(match[1], 10) + 1;
           break;
@@ -250,7 +251,7 @@ function guardarRegistroNuevo(datos) {
       }
     }
 
-    const nuevoFolio = 'ENF-' + String(nuevoNumero).padStart(4, '0');
+    const nuevoFolio = 'UPA-' + String(nuevoNumero).padStart(4, '0');
 
     // Sanitización y armado de fila
     const filaNueva = [

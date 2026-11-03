@@ -1,11 +1,11 @@
-# Boston Medical Record 🏥
-### Sistema Web de Registro Clínico y Enfermería Escolar
+# UPA - Unidad de Primeros Auxilios 🏥🦁
+### Sistema Web de Registro y Atención Clínica Escolar
 **Colegio Boston - Cuernavaca, Morelos**
 
 ---
 
 ## 📌 Descripción General
-Aplicación Web desarrollada sobre **Google Apps Script (GAS)** y **Google Sheets** para la gestión y captura en tiempo real de atenciones médicas en la enfermería escolar. Brinda control de acceso por roles, listas dinámicas dependientes de alumnos y personal, control de concurrencia y generación automática de folios consecutivos únicos (`ENF-XXXX`).
+Aplicación Web desarrollada sobre **Google Apps Script (GAS)** y **Google Sheets** para la gestión y captura en tiempo real de atenciones médicas en la **UPA (Unidad de Primeros Auxilios)** del Colegio Boston. Cuenta con identidad institucional oficial (colores azul marino, dorado, rojo, franjas y la leona traslúcida), selector precargado de usuarios, control de concurrencia y generación automática de folios consecutivos únicos (`UPA-XXXX`).
 
 ---
 
@@ -14,20 +14,22 @@ Aplicación Web desarrollada sobre **Google Apps Script (GAS)** y **Google Sheet
 Boston_Medical_Record/
 │
 ├── Codigo.gs        # Backend (Google Apps Script): APIs, Locks, Login y DB Sheets
-├── Index.html       # Frontend (HTML5, CSS3 institucional, JavaScript reactivo)
+├── Index.html       # Frontend (Banner UPA institucional, HTML5, CSS3, JS reactivo)
+├── appsscript.json  # Manifiesto oficial de Google Apps Script (V8, TimeZone CDMX)
+├── .clasp.json      # Configuración de vinculación CLI con script.google.com
 └── README.md        # Documentación de configuración y despliegue
 ```
 
 ---
 
 ## 📊 Estructura de la Hoja de Cálculo (Google Sheets)
-El script requiere un archivo de Google Sheets activo vinculado al proyecto con las siguientes hojas y nombres exactos:
+El script requiere un archivo de Google Sheets activo vinculado al proyecto con las siguientes hojas:
 
 ### 1. Hoja: `Usuarios`
 | Columna A | Columna B | Columna C | Columna D |
 | :--- | :--- | :--- | :--- |
 | **Usuario** | **Password** | **Rol** | **Nombre Completo** |
-| enfermeria | Boston2026* | Capturista | Lic. Ana Morales |
+| upa | Boston2026* | Capturista | Lic. Ana Morales |
 | direccion | Admin2026* | AdminJr | Lic. Hugo García |
 
 ### 2. Hoja: `Directorio_Alumnos`
@@ -46,9 +48,9 @@ El script requiere un archivo de Google Sheets activo vinculado al proyecto con 
 | Administrativo | Lic. Patricia Fuentes |
 | Docente Preparatoria | Mtra. Sofía Valenzuela |
 
-### 4. Hoja: `Registro_Enfermeria`
-*(Se crea automáticamente si no existe la primera vez que se guarda un registro).*
-- **Columnas:** Folio (`ENF-0001`), Fecha Ingreso, Hora Entrada, Capturista, Sección, Grado y Grupo, Nombre Paciente, Edad, FC, FR, SpO2 (%), T/A, Temp (°C), Síntoma Principal, Síntoma Detalle, Tratamiento Aplicado, Observaciones, Hora Salida, Estatus.
+### 4. Hoja: `Registro_UPA`
+*(Compatible con `Registro_Enfermeria` si ya existía; se crea automáticamente como `Registro_UPA` si no existe).*
+- **Columnas:** Folio UPA (`UPA-0001`), Fecha Ingreso, Hora Entrada, Responsable UPA, Sección, Grado y Grupo, Nombre Paciente, Edad, FC, FR, SpO2 (%), T/A, Temp (°C), Síntoma Principal, Síntoma Detalle, Tratamiento / Primeros Auxilios, Observaciones, Hora Salida, Estatus.
 
 ---
 
