@@ -121,7 +121,16 @@ function obtenerCatalogos() {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
 
     // --- Procesar Alumnos ---
-    const hojaAlumnos = ss.getSheetByName('Directorio_Alumnos');
+    let hojaAlumnos = ss.getSheetByName('Directorio_Alumnos');
+
+    // Auto-poblar el directorio con la base de 420 alumnos y teléfonos de tutores si está vacía
+    if (!hojaAlumnos || hojaAlumnos.getLastRow() <= 5) {
+      if (typeof sincronizarDirectorioAlumnosSheets === 'function') {
+        sincronizarDirectorioAlumnosSheets(true);
+        hojaAlumnos = ss.getSheetByName('Directorio_Alumnos');
+      }
+    }
+
     let catalogoAlumnos = {};
 
     if (hojaAlumnos && hojaAlumnos.getLastRow() > 1) {
@@ -132,18 +141,29 @@ function obtenerCatalogos() {
         const nivel = fila[0] ? fila[0].toString().trim() : '';
         const grupo = fila[1] ? fila[1].toString().trim() : '';
         const nombre = fila[2] ? fila[2].toString().trim() : '';
+        const tel1 = fila[3] ? fila[3].toString().replace(/\D+/g, '') : '';
+        const tutor1 = fila[4] ? fila[4].toString().trim() : 'Mamá / Tutora';
+        const tel2 = fila[5] ? fila[5].toString().replace(/\D+/g, '') : '';
+        const tutor2 = fila[6] ? fila[6].toString().trim() : 'Papá / Tutor';
 
         if (nivel && grupo && nombre) {
           if (!catalogoAlumnos[nivel]) catalogoAlumnos[nivel] = {};
           if (!catalogoAlumnos[nivel][grupo]) catalogoAlumnos[nivel][grupo] = [];
-          catalogoAlumnos[nivel][grupo].push(nombre);
+          
+          catalogoAlumnos[nivel][grupo].push({
+            nombre: nombre,
+            tel1: tel1,
+            tutor1: tutor1,
+            tel2: tel2,
+            tutor2: tutor2
+          });
         }
       });
 
       // Ordenar alfabéticamente los nombres dentro de cada grupo
       Object.keys(catalogoAlumnos).forEach(nivel => {
         Object.keys(catalogoAlumnos[nivel]).forEach(grupo => {
-          catalogoAlumnos[nivel][grupo].sort((a, b) => a.localeCompare(b, 'es'));
+          catalogoAlumnos[nivel][grupo].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
         });
       });
     }
@@ -228,7 +248,8 @@ function guardarRegistroNuevo(datos) {
         'Síntoma Principal',
         'Síntoma Detalle / Otro',
         'Tratamiento / Primeros Auxilios',
-        'Observaciones',
+        'Sugerencia de Salud / Observaciones',
+        'Tutor Notificado (Tel)',
         'Hora Salida',
         'Estatus'
       ]);
@@ -254,6 +275,8 @@ function guardarRegistroNuevo(datos) {
     const nuevoFolio = 'UPA-' + String(nuevoNumero).padStart(4, '0');
 
     // Sanitización y armado de fila
+    const tutorInfo = datos.nombreTutor ? `${datos.nombreTutor} (${datos.telNotificado || 'Sin Tel'})` : (datos.telNotificado || '');
+
     const filaNueva = [
       nuevoFolio,
       datos.fechaIngreso || Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd'),
@@ -271,7 +294,8 @@ function guardarRegistroNuevo(datos) {
       datos.sintoma || '',
       datos.sintomaOtro || '',
       datos.tratamiento || '',
-      datos.observaciones || '',
+      datos.observaciones || datos.sugerenciaSalud || '',
+      tutorInfo,
       datos.horaSalida || '',
       datos.estatus || 'Activo'
     ];

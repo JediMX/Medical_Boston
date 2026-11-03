@@ -396,6 +396,117 @@
       text-decoration: underline;
     }
 
+    /* ==============================================================
+       TARJETA DE NOTIFICACIÓN A PADRES / TUTORES Y WHATSAPP
+       ============================================================== */
+    .card-notificacion-tutor {
+      background: #f8fafc;
+      border: 1.5px solid #cbd5e1;
+      border-radius: var(--radio-tarjeta);
+      padding: 18px 16px;
+      margin: 22px 0;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
+    }
+
+    .tutor-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .tutor-icon {
+      font-size: 26px;
+    }
+
+    .tutor-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--color-primario);
+    }
+
+    .tutor-sub {
+      font-size: 12px;
+      color: var(--color-texto-muted);
+    }
+
+    .acciones-whatsapp {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .btn-wa {
+      width: 100%;
+      border: none;
+      border-radius: var(--radio-input);
+      padding: 12px 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-align: left;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+
+    .btn-wa:active {
+      transform: scale(0.98);
+    }
+
+    .btn-wa-icon {
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    .btn-wa-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.25;
+    }
+
+    .btn-wa-text strong {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .btn-wa-text small {
+      font-size: 11px;
+      opacity: 0.9;
+      margin-top: 2px;
+    }
+
+    /* Botón 1: Verde WhatsApp Informativo */
+    .btn-wa-info {
+      background: #25d366;
+      color: #ffffff;
+      box-shadow: 0 4px 10px rgba(37, 211, 102, 0.25);
+    }
+    .btn-wa-info:hover {
+      background: #20ba5a;
+    }
+
+    /* Botón 2: Ámbar / Naranja Retiro a Casa */
+    .btn-wa-retiro {
+      background: #f59e0b;
+      color: #ffffff;
+      box-shadow: 0 4px 10px rgba(245, 158, 11, 0.25);
+    }
+    .btn-wa-retiro:hover {
+      background: #d97706;
+    }
+
+    /* Botón 3: Rojo Urgencia Inmediata */
+    .btn-wa-urgente {
+      background: #dc2626;
+      color: #ffffff;
+      box-shadow: 0 4px 10px rgba(220, 38, 38, 0.25);
+    }
+    .btn-wa-urgente:hover {
+      background: #b91c1c;
+    }
+
     /* Pestañas */
     .tabs {
       display: flex;
@@ -683,8 +794,67 @@
         </div>
 
         <div class="input-group">
-          <label for="observaciones">Observaciones Adicionales / Llamada a Padres</label>
-          <textarea id="observaciones" rows="2" placeholder="Se notificó a tutor, se reincorpora a clase, etc."></textarea>
+          <label for="observaciones">Sugerencia de salud / Observaciones</label>
+          <textarea id="observaciones" rows="2" placeholder="Recomendaciones para casa, reposo, observación clínica, etc."></textarea>
+        </div>
+
+        <!-- ==================== SECCIÓN: NOTIFICACIÓN A PADRES / TUTORES ==================== -->
+        <div class="card-notificacion-tutor">
+          <div class="tutor-header">
+            <span class="tutor-icon">📲</span>
+            <div>
+              <div class="tutor-title">Notificación a Padres o Tutor Legal</div>
+              <div class="tutor-sub">Envío directo de reporte clínico vía WhatsApp o Llamada de Urgencia</div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px;">
+            <div class="input-group" style="margin-bottom: 8px;">
+              <label for="selectTutor">Tutor / Contacto Registrado</label>
+              <select id="selectTutor" onchange="seleccionarContactoTutor()">
+                <option value="">Seleccione paciente primero...</option>
+              </select>
+            </div>
+            <div class="input-group" style="margin-bottom: 8px;">
+              <label for="telTutor">Teléfono (WhatsApp)</label>
+              <input type="tel" id="telTutor" placeholder="Ej. 7771234567">
+            </div>
+          </div>
+
+          <div class="input-group" style="margin-bottom: 14px;">
+            <label for="nombreTutor">Nombre del Padre, Madre o Tutor</label>
+            <input type="text" id="nombreTutor" placeholder="Nombre completo del tutor a notificar">
+          </div>
+
+          <!-- 3 BOTONES DE ACCIÓN RÁPIDA -->
+          <div class="acciones-whatsapp">
+            <!-- Botón 1: Notificación Informativa -->
+            <button type="button" class="btn-wa btn-wa-info" onclick="enviarWhatsAppTutor('informativo')">
+              <span class="btn-wa-icon">🟢</span>
+              <span class="btn-wa-text">
+                <strong>Notificar Atención (WhatsApp)</strong>
+                <small>Informativo breve • El alumno continúa en sus clases</small>
+              </span>
+            </button>
+
+            <!-- Botón 2: Pase de Salida / Retirar a Casa -->
+            <button type="button" class="btn-wa btn-wa-retiro" onclick="enviarWhatsAppTutor('retiro')">
+              <span class="btn-wa-icon">🟠</span>
+              <span class="btn-wa-text">
+                <strong>Sugerir Retirar a Casa (WhatsApp)</strong>
+                <small>Pase de salida • Se sugiere reposo y acudir por el alumno</small>
+              </span>
+            </button>
+
+            <!-- Botón 3: Llamada / Urgencia Inmediata -->
+            <button type="button" class="btn-wa btn-wa-urgente" onclick="enviarWhatsAppTutor('urgencia')">
+              <span class="btn-wa-icon">🚨</span>
+              <span class="btn-wa-text">
+                <strong>Llamada / Alerta de Urgencia</strong>
+                <small>Incidente o accidente • Requiere presencia inmediata</small>
+              </span>
+            </button>
+          </div>
         </div>
 
         <!-- Hora de Salida -->
@@ -958,6 +1128,8 @@
           sintomaOtro: document.getElementById('sintomaOtroText').value,
           tratamiento: document.getElementById('tratamiento').value,
           observaciones: document.getElementById('observaciones').value,
+          telTutor: document.getElementById('telTutor') ? document.getElementById('telTutor').value : '',
+          nombreTutor: document.getElementById('nombreTutor') ? document.getElementById('nombreTutor').value : '',
           horaSalida: document.getElementById('horaSalida').value
         };
         sessionStorage.setItem(KEY_BORRADOR, JSON.stringify(borrador));
@@ -989,6 +1161,8 @@
         if (b.sintomaOtro) document.getElementById('sintomaOtroText').value = b.sintomaOtro;
         if (b.tratamiento) document.getElementById('tratamiento').value = b.tratamiento;
         if (b.observaciones) document.getElementById('observaciones').value = b.observaciones;
+        if (b.telTutor && document.getElementById('telTutor')) document.getElementById('telTutor').value = b.telTutor;
+        if (b.nombreTutor && document.getElementById('nombreTutor')) document.getElementById('nombreTutor').value = b.nombreTutor;
         if (b.horaSalida) document.getElementById('horaSalida').value = b.horaSalida;
       } catch(e) {}
     }
@@ -1066,6 +1240,13 @@
       document.getElementById('nombrePacienteInput').value = '';
       document.getElementById('sintomaOtroText').required = false;
 
+      const selTutor = document.getElementById('selectTutor');
+      if (selTutor) selTutor.innerHTML = '<option value="">Seleccione paciente primero...</option>';
+      const telInput = document.getElementById('telTutor');
+      if (telInput) telInput.value = '';
+      const nombreInput = document.getElementById('nombreTutor');
+      if (nombreInput) nombreInput.value = '';
+
       prepararFormularioCapturista();
     }
 
@@ -1135,13 +1316,223 @@
       const select = document.getElementById('nombrePacienteSelect');
       select.innerHTML = '<option value="">Seleccione paciente...</option>';
       if (Array.isArray(arreglo) && arreglo.length > 0) {
-        arreglo.forEach(nombre => {
+        arreglo.forEach(item => {
           const opt = document.createElement('option');
-          opt.value = nombre;
-          opt.textContent = nombre;
+          if (typeof item === 'object' && item !== null) {
+            opt.value = item.nombre;
+            opt.textContent = item.nombre;
+            opt.dataset.tel1 = item.tel1 || '';
+            opt.dataset.tutor1 = item.tutor1 || 'Mamá / Tutora';
+            opt.dataset.tel2 = item.tel2 || '';
+            opt.dataset.tutor2 = item.tutor2 || 'Papá / Tutor';
+          } else {
+            opt.value = item;
+            opt.textContent = item;
+          }
           select.appendChild(opt);
         });
       }
+    }
+
+    // Vincular cambio de paciente con carga de tutores
+    document.addEventListener('DOMContentLoaded', function() {
+      const selPaciente = document.getElementById('nombrePacienteSelect');
+      if (selPaciente) {
+        selPaciente.addEventListener('change', function() {
+          const opt = this.options[this.selectedIndex];
+          actualizarContactosTutor(opt);
+        });
+      }
+    });
+
+    function actualizarContactosTutor(opt) {
+      const selTutor = document.getElementById('selectTutor');
+      const telInput = document.getElementById('telTutor');
+      const nombreInput = document.getElementById('nombreTutor');
+
+      if (!selTutor || !telInput || !nombreInput) return;
+
+      selTutor.innerHTML = '';
+
+      if (!opt || !opt.value) {
+        selTutor.innerHTML = '<option value="">Seleccione paciente primero...</option>';
+        telInput.value = '';
+        nombreInput.value = '';
+        return;
+      }
+
+      const tel1 = (opt.dataset && opt.dataset.tel1) ? opt.dataset.tel1 : '';
+      const tutor1 = (opt.dataset && opt.dataset.tutor1) ? opt.dataset.tutor1 : 'Mamá / Tutora';
+      const tel2 = (opt.dataset && opt.dataset.tel2) ? opt.dataset.tel2 : '';
+      const tutor2 = (opt.dataset && opt.dataset.tutor2) ? opt.dataset.tutor2 : 'Papá / Tutor';
+
+      let opciones = [];
+
+      if (tel1) {
+        opciones.push({
+          etiqueta: `Mamá/Tutora: ${tutor1} (${tel1})`,
+          nombre: tutor1,
+          tel: tel1
+        });
+      }
+
+      if (tel2) {
+        opciones.push({
+          etiqueta: `Papá/Tutor: ${tutor2} (${tel2})`,
+          nombre: tutor2,
+          tel: tel2
+        });
+      }
+
+      opciones.push({
+        etiqueta: 'Otro número (Ingresar manual)...',
+        nombre: '',
+        tel: ''
+      });
+
+      opciones.forEach((op, idx) => {
+        const o = document.createElement('option');
+        o.value = idx;
+        o.textContent = op.etiqueta;
+        o.dataset.tel = op.tel;
+        o.dataset.nombre = op.nombre;
+        selTutor.appendChild(o);
+      });
+
+      if (opciones.length > 0 && opciones[0].tel) {
+        selTutor.value = "0";
+        telInput.value = opciones[0].tel;
+        nombreInput.value = opciones[0].nombre;
+      } else {
+        telInput.value = '';
+        nombreInput.value = '';
+      }
+    }
+
+    function seleccionarContactoTutor() {
+      const selTutor = document.getElementById('selectTutor');
+      const opt = selTutor.options[selTutor.selectedIndex];
+      const telInput = document.getElementById('telTutor');
+      const nombreInput = document.getElementById('nombreTutor');
+
+      if (opt && opt.dataset && opt.dataset.tel) {
+        telInput.value = opt.dataset.tel;
+        nombreInput.value = opt.dataset.nombre || '';
+      } else {
+        telInput.value = '';
+        nombreInput.value = '';
+        telInput.focus();
+      }
+    }
+
+    // -------------------------------------------------------------
+    // GENERACIÓN Y ENVÍO DE NOTIFICACIONES WHATSAPP / LLAMADA
+    // -------------------------------------------------------------
+    function construirMensajeWhatsApp(tipo) {
+      const horaIngreso = document.getElementById('horaEntrada').value || 'la hora indicada';
+      const seccion = document.getElementById('seccionPaciente').value;
+      const nombrePaciente = (seccion === 'Publico')
+        ? document.getElementById('nombrePacienteInput').value.trim()
+        : document.getElementById('nombrePacienteSelect').value.trim();
+      
+      const sintomaPrincipal = document.getElementById('sintomaSelect').value;
+      const sintomaDetalle = document.getElementById('sintomaOtroText').value.trim();
+      const sintomaCompleto = sintomaDetalle ? `${sintomaPrincipal} (${sintomaDetalle})` : sintomaPrincipal;
+      
+      const tratamiento = document.getElementById('tratamiento').value.trim() || 'Atención de primeros auxilios y reposo en UPA';
+      const sugerenciaSalud = document.getElementById('observaciones').value.trim() || 'Monitoreo e hidratación en casa.';
+      const nombreTutor = document.getElementById('nombreTutor').value.trim();
+
+      // Saludo según horario de Cuernavaca
+      const ahora = new Date();
+      const horaActual = ahora.getHours();
+      const saludo = (horaActual < 12) ? 'Buenos días' : ((horaActual < 19) ? 'Buenas tardes' : 'Buenas noches');
+
+      let saludoTutor = nombreTutor ? `${saludo}, estimado(a) ${nombreTutor}` : `${saludo}, estimado(a) padre/tutor`;
+
+      let texto = "";
+
+      if (tipo === 'informativo') {
+        texto = `${saludoTutor}.
+
+Le informamos que el día de hoy a las *${horaIngreso} hrs* ingresó a la *Unidad de Primeros Auxilios (UPA)* del Colegio Boston el alumno(a) *${nombrePaciente}*.
+
+📋 *Motivo de atención:* ${sintomaCompleto || 'Valoración general'}
+🩺 *Atención brindada:* ${tratamiento}
+💡 *Sugerencia de salud:* ${sugerenciaSalud}
+
+El alumno(a) se encuentra estable y continúa con sus actividades escolares regulares. Este reporte se emite únicamente para su información y seguimiento en casa.
+
+Atentamente,
+*UPA • Unidad de Primeros Auxilios*
+Colegio Boston`;
+      }
+      else if (tipo === 'retiro') {
+        texto = `${saludoTutor}.
+
+Le informamos que el día de hoy a las *${horaIngreso} hrs* ingresó a la *Unidad de Primeros Auxilios (UPA)* del Colegio Boston el alumno(a) *${nombrePaciente}*.
+
+📋 *Motivo de atención:* ${sintomaCompleto || 'Malestar de salud'}
+🩺 *Atención brindada:* ${tratamiento}
+💡 *Sugerencia de salud:* ${sugerenciaSalud}
+
+⚠️ *SUGERENCIA DE RETIRO:* Por su bienestar y pronta recuperación, se sugiere acudir al colegio para retirarlo(a) a casa a descansar. 
+
+Favor de presentarse en recepción al llegar o comunicarse con nosotros para coordinar su pase de salida.
+
+Atentamente,
+*UPA • Unidad de Primeros Auxilios*
+Colegio Boston`;
+      }
+      else if (tipo === 'urgencia') {
+        texto = `🚨 *AVISO DE URGENCIA - COLEGIO BOSTON*
+
+${saludoTutor}:
+
+Le solicitamos comunicarse de manera *INMEDIATA* o acudir a la *Unidad de Primeros Auxilios (UPA)* del Colegio Boston debido a un incidente escolar que requiere la presencia inmediata de alguno de los padres de *${nombrePaciente}*.
+
+⏰ *Hora de atención:* ${horaIngreso} hrs
+📋 *Incidente / Situación:* ${sintomaCompleto || 'Atención prioritaria'}
+🩺 *Primeros auxilios:* ${tratamiento}
+
+Por favor responda a este mensaje de inmediato o comuníquese a la línea directa del colegio.
+
+Atentamente,
+*UPA • Unidad de Primeros Auxilios*
+Colegio Boston`;
+      }
+
+      return texto;
+    }
+
+    function enviarWhatsAppTutor(tipo) {
+      let tel = document.getElementById('telTutor').value.replace(/\D+/g, '');
+
+      if (!tel || tel.length < 10) {
+        alert("Por favor verifica el número de teléfono del tutor (debe contener al menos 10 dígitos).");
+        document.getElementById('telTutor').focus();
+        return;
+      }
+
+      // Si tiene 10 dígitos en México, anteponer 52
+      let telWA = tel;
+      if (tel.length === 10) {
+        telWA = '52' + tel;
+      }
+
+      const mensaje = construirMensajeWhatsApp(tipo);
+
+      // Si es tipo urgencia, ofrecer primero la llamada directa en celulares
+      if (tipo === 'urgencia') {
+        const confirmarLlamada = confirm("🚨 ALERTA DE URGENCIA\n\n¿Deseas realizar una LLAMADA TELEFÓNICA directa al tutor en este momento?\n\n- Aceptar: Realizar LLAMADA telefónica al " + tel.slice(-10) + "\n- Cancelar: Enviar mensaje de WhatsApp de urgencia");
+        if (confirmarLlamada) {
+          window.location.href = 'tel:' + tel.slice(-10);
+          return;
+        }
+      }
+
+      const url = `https://wa.me/${telWA}?text=${encodeURIComponent(mensaje)}`;
+      window.open(url, '_blank');
     }
 
     function verificarSintoma() {
@@ -1199,6 +1590,9 @@
         sintomaOtro: document.getElementById('sintomaOtroText').value.trim(),
         tratamiento: document.getElementById('tratamiento').value.trim(),
         observaciones: document.getElementById('observaciones').value.trim(),
+        sugerenciaSalud: document.getElementById('observaciones').value.trim(),
+        telNotificado: document.getElementById('telTutor').value.trim(),
+        nombreTutor: document.getElementById('nombreTutor').value.trim(),
         horaSalida: document.getElementById('horaSalida').value || '',
         estatus: 'Activo'
       };
