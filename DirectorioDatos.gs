@@ -3788,7 +3788,7 @@ const DIRECTORIO_ALUMNOS_OFICIAL = [
 
 function sincronizarDirectorioAlumnosSheets(forzarSobrescritura) {
   try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const ss = (typeof obtenerSpreadsheetPrincipal === 'function') ? obtenerSpreadsheetPrincipal() : SpreadsheetApp.getActiveSpreadsheet();
     let hoja = ss.getSheetByName('Directorio_Alumnos');
     if (!hoja) {
       hoja = ss.insertSheet('Directorio_Alumnos');

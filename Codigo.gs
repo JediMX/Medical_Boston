@@ -3,10 +3,56 @@
 // Colegio Boston - Cuernavaca, Morelos
 // ============================================================================
 
+// ID de la hoja de cálculo oficial proporcionada por Dirección
+const ID_SPREADSHEET_PRINCIPAL = '1EIQ1PN70e6CuSrkC2ZiggRV58b9VkWbS4FDtR5_4R60';
+
+/**
+ * Conexión centralizada a la base de datos de Google Sheets
+ */
+function obtenerSpreadsheetPrincipal() {
+  if (ID_SPREADSHEET_PRINCIPAL) {
+    try {
+      const ss = SpreadsheetApp.openById(ID_SPREADSHEET_PRINCIPAL);
+      if (ss) return ss;
+    } catch (e) {
+      console.warn("No se pudo abrir hoja por ID '" + ID_SPREADSHEET_PRINCIPAL + "':", e.message);
+    }
+  }
+  try {
+    const ssActivo = SpreadsheetApp.getActiveSpreadsheet();
+    if (ssActivo) return ssActivo;
+  } catch (e) {}
+
+  throw new Error("No se pudo conectar con la hoja de cálculo de Boston Medical Record (" + ID_SPREADSHEET_PRINCIPAL + ").");
+}
+
+/**
+ * Localiza la pestaña donde están definidos los usuarios
+ * Busca por nombre ('Usuarios', 'Personal', etc.) o toma la pestaña gid=0
+ */
+function obtenerHojaUsuarios(ss) {
+  if (!ss) return null;
+
+  const nombresValidos = ['usuarios', 'usuario', 'users', 'user', 'personal', 'cuentas', 'accesos'];
+  const hojas = ss.getSheets();
+
+  for (const n of nombresValidos) {
+    const encontrada = hojas.find(h => h.getName().trim().toLowerCase() === n);
+    if (encontrada) return encontrada;
+  }
+
+  // Si no se encuentra por nombre exacto, buscar por gid=0 (la primera pestaña del enlace compartido)
+  const hojaGid0 = hojas.find(h => h.getSheetId() === 0);
+  if (hojaGid0) return hojaGid0;
+
+  // Respaldo: primera hoja disponible en el libro
+  return hojas.length > 0 ? hojas[0] : null;
+}
+
 // ==========================================
 // 1. SERVIR LA APLICACIÓN WEB
 // ==========================================
-function doGet() {
+function doGet(e) {
   try {
     return HtmlService.createTemplateFromFile('Index')
       .evaluate()
@@ -27,73 +73,111 @@ function include(filename) {
 // 2. SISTEMA DE LOGIN Y AUTENTICACIÓN
 // ==========================================
 
-// Obtener usuarios autorizados para el selector de Login (evita errores tipográficos)
+// Obtener usuarios autorizados para el selector de Login (lee la hoja de cálculo oficial)
 function obtenerUsuariosDisponibles() {
   try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    let hojaUsuarios = ss.getSheetByName('Usuarios');
+    const ss = obtenerSpreadsheetPrincipal();
+    const hojaUsuarios = obtenerHojaUsuarios(ss);
 
-    // Búsqueda flexible (insensible a mayúsculas/minúsculas y espacios)
-    if (!hojaUsuarios) {
-      const hojas = ss.getSheets();
-      hojaUsuarios = hojas.find(h => h.getName().trim().toLowerCase() === 'usuarios');
-    }
-
-    // Si la hoja no existe o está vacía, crearla y auto-poblarla con cuentas predeterminadas
-    if (!hojaUsuarios) {
-      hojaUsuarios = ss.insertSheet('Usuarios');
-      hojaUsuarios.appendRow(['Usuario', 'Contraseña', 'Rol', 'Nombre Completo']);
-      hojaUsuarios.appendRow(['upa', 'Boston2026*', 'Capturista', 'Personal UPA']);
-      hojaUsuarios.appendRow(['enfermeria', 'Boston2026*', 'Capturista', 'Enfermería Boston']);
-      hojaUsuarios.appendRow(['direccion', 'Admin2026*', 'AdminJr', 'Dirección Académica']);
-      hojaUsuarios.appendRow(['admin', 'Admin2026*', 'AdminJr', 'Administrador']);
-    } else if (hojaUsuarios.getLastRow() <= 1) {
-      if (hojaUsuarios.getLastRow() === 0) {
-        hojaUsuarios.appendRow(['Usuario', 'Contraseña', 'Rol', 'Nombre Completo']);
-      }
-      hojaUsuarios.appendRow(['upa', 'Boston2026*', 'Capturista', 'Personal UPA']);
-      hojaUsuarios.appendRow(['enfermeria', 'Boston2026*', 'Capturista', 'Enfermería Boston']);
-      hojaUsuarios.appendRow(['direccion', 'Admin2026*', 'AdminJr', 'Dirección Académica']);
-      hojaUsuarios.appendRow(['admin', 'Admin2026*', 'AdminJr', 'Administrador']);
+    if (!hojaUsuarios || hojaUsuarios.getLastRow() < 1) {
+      return {
+        exito: true,
+        usuarios: [
+          { usuario: 'upa', nombre: 'Personal UPA', rol: 'Capturista' },
+          { usuario: 'enfermeria', nombre: 'Enfermería Boston', rol: 'Capturista' },
+          { usuario: 'direccion', nombre: 'Dirección Académica', rol: 'AdminJr' },
+          { usuario: 'admin', nombre: 'Administrador', rol: 'AdminJr' }
+        ]
+      };
     }
 
     const datos = hojaUsuarios.getDataRange().getValues();
-    const lista = [];
-
-    // Omitir encabezados (fila 1 / índice 0)
-    for (let i = 1; i < datos.length; i++) {
-      const fila = datos[i];
-      const usuario = fila[0] ? fila[0].toString().trim() : '';
-      const rol = fila[2] ? fila[2].toString().trim() : 'Capturista';
-      const nombre = fila[3] ? fila[3].toString().trim() : usuario;
-
-      if (usuario) {
-        lista.push({
-          usuario: usuario,
-          nombre: nombre,
-          rol: rol
-        });
-      }
+    if (datos.length === 0) {
+      return { exito: true, usuarios: [] };
     }
 
+    // Identificar dinámicamente las columnas analizando los encabezados
+    let idxUsuario = -1;
+    let idxPassword = -1;
+    let idxRol = -1;
+    let idxNombre = -1;
+
+    const fila1 = datos[0];
+    const tieneEncabezados = fila1.some(celda => {
+      const txt = celda ? celda.toString().trim().toLowerCase() : '';
+      return /usuario|user|correo|email|cuenta|nombre|name|rol|role|password|contrase/i.test(txt);
+    });
+
+    if (tieneEncabezados) {
+      fila1.forEach((celda, idx) => {
+        const txt = celda ? celda.toString().trim().toLowerCase() : '';
+        if (idxUsuario === -1 && /usuario|user|correo|email|cuenta|login/i.test(txt)) idxUsuario = idx;
+        else if (idxPassword === -1 && /contrase|password|clave|pass|pin/i.test(txt)) idxPassword = idx;
+        else if (idxRol === -1 && /rol|role|perfil|tipo|cargo|puesto/i.test(txt)) idxRol = idx;
+        else if (idxNombre === -1 && /nombre|name|personal|completo|titular/i.test(txt)) idxNombre = idx;
+      });
+    }
+
+    // Índices predeterminados si las columnas no coinciden con nombres típicos
+    if (idxUsuario === -1) idxUsuario = 0;
+    if (idxPassword === -1 && fila1.length > 1) idxPassword = 1;
+    if (idxRol === -1 && fila1.length > 2) idxRol = 2;
+    if (idxNombre === -1) {
+      idxNombre = (fila1.length > 3) ? 3 : idxUsuario;
+    }
+
+    const filaInicio = tieneEncabezados ? 1 : 0;
+    const lista = [];
+    const usuariosVistos = new Set();
+
+    for (let i = filaInicio; i < datos.length; i++) {
+      const fila = datos[i];
+      const usuario = fila[idxUsuario] !== undefined ? fila[idxUsuario].toString().trim() : '';
+      if (!usuario) continue;
+
+      const userLower = usuario.toLowerCase();
+      if (usuariosVistos.has(userLower)) continue;
+      usuariosVistos.add(userLower);
+
+      let rol = (idxRol !== -1 && fila[idxRol] !== undefined) ? fila[idxRol].toString().trim() : 'Capturista';
+      if (/admin|direc|coord/i.test(rol)) rol = 'AdminJr';
+      else rol = 'Capturista';
+
+      let nombre = (idxNombre !== -1 && fila[idxNombre] !== undefined) ? fila[idxNombre].toString().trim() : '';
+      if (!nombre) nombre = usuario;
+
+      lista.push({
+        usuario: usuario,
+        nombre: nombre,
+        rol: rol
+      });
+    }
+
+    // Fallbacks si la hoja venía vacía
     if (lista.length === 0) {
       lista.push({ usuario: 'upa', nombre: 'Personal UPA', rol: 'Capturista' });
       lista.push({ usuario: 'enfermeria', nombre: 'Enfermería Boston', rol: 'Capturista' });
       lista.push({ usuario: 'direccion', nombre: 'Dirección Académica', rol: 'AdminJr' });
+      lista.push({ usuario: 'admin', nombre: 'Administrador', rol: 'AdminJr' });
     }
 
-    // Ordenar alfabéticamente por nombre para facilitar la búsqueda
+    // Ordenar alfabéticamente por nombre
     lista.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
 
-    return { exito: true, usuarios: lista };
+    return {
+      exito: true,
+      usuarios: lista,
+      total: lista.length,
+      hoja: hojaUsuarios.getName()
+    };
   } catch (error) {
-    // Si ocurre un error, regresar usuarios por defecto para no bloquear el acceso
     return {
       exito: true,
       usuarios: [
         { usuario: 'upa', nombre: 'Personal UPA', rol: 'Capturista' },
         { usuario: 'enfermeria', nombre: 'Enfermería Boston', rol: 'Capturista' },
-        { usuario: 'direccion', nombre: 'Dirección Académica', rol: 'AdminJr' }
+        { usuario: 'direccion', nombre: 'Dirección Académica', rol: 'AdminJr' },
+        { usuario: 'admin', nombre: 'Administrador', rol: 'AdminJr' }
       ],
       mensaje: 'Usuarios cargados en modo resiliente: ' + error.message
     };
@@ -109,43 +193,70 @@ function verificarLogin(usuario, password) {
     const userLimpio = usuario.toString().trim().toLowerCase();
     const passLimpio = password.toString().trim();
 
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    let hojaUsuarios = ss.getSheetByName('Usuarios');
+    const ss = obtenerSpreadsheetPrincipal();
+    const hojaUsuarios = obtenerHojaUsuarios(ss);
 
-    if (!hojaUsuarios) {
-      const hojas = ss.getSheets();
-      hojaUsuarios = hojas.find(h => h.getName().trim().toLowerCase() === 'usuarios');
-    }
-
-    // Si aún no existe, inicializarla
-    if (!hojaUsuarios || hojaUsuarios.getLastRow() <= 1) {
-      obtenerUsuariosDisponibles();
-      hojaUsuarios = ss.getSheetByName('Usuarios') || ss.getSheets().find(h => h.getName().trim().toLowerCase() === 'usuarios');
-    }
-
-    if (hojaUsuarios && hojaUsuarios.getLastRow() > 1) {
+    if (hojaUsuarios && hojaUsuarios.getLastRow() >= 1) {
       const datos = hojaUsuarios.getDataRange().getValues();
+      const fila1 = datos[0];
 
-      // Búsqueda a partir de la fila 2 (índice 1) para omitir encabezados
-      for (let i = 1; i < datos.length; i++) {
+      let idxUsuario = -1;
+      let idxPassword = -1;
+      let idxRol = -1;
+      let idxNombre = -1;
+
+      const tieneEncabezados = fila1.some(celda => {
+        const txt = celda ? celda.toString().trim().toLowerCase() : '';
+        return /usuario|user|correo|email|cuenta|nombre|name|rol|role|password|contrase/i.test(txt);
+      });
+
+      if (tieneEncabezados) {
+        fila1.forEach((celda, idx) => {
+          const txt = celda ? celda.toString().trim().toLowerCase() : '';
+          if (idxUsuario === -1 && /usuario|user|correo|email|cuenta|login/i.test(txt)) idxUsuario = idx;
+          else if (idxPassword === -1 && /contrase|password|clave|pass|pin/i.test(txt)) idxPassword = idx;
+          else if (idxRol === -1 && /rol|role|perfil|tipo|cargo|puesto/i.test(txt)) idxRol = idx;
+          else if (idxNombre === -1 && /nombre|name|personal|completo|titular/i.test(txt)) idxNombre = idx;
+        });
+      }
+
+      if (idxUsuario === -1) idxUsuario = 0;
+      if (idxPassword === -1 && fila1.length > 1) idxPassword = 1;
+      if (idxRol === -1 && fila1.length > 2) idxRol = 2;
+      if (idxNombre === -1) idxNombre = (fila1.length > 3) ? 3 : idxUsuario;
+
+      const filaInicio = tieneEncabezados ? 1 : 0;
+
+      for (let i = filaInicio; i < datos.length; i++) {
         const fila = datos[i];
-        const userBD = fila[0] ? fila[0].toString().trim().toLowerCase() : '';
-        const passBD = fila[1] ? fila[1].toString().trim() : '';
-        const rolBD = fila[2] ? fila[2].toString().trim() : 'Capturista';
-        const nombreBD = fila[3] ? fila[3].toString().trim() : 'Usuario';
+        const userBD = fila[idxUsuario] !== undefined ? fila[idxUsuario].toString().trim().toLowerCase() : '';
+        const passBD = (idxPassword !== -1 && fila[idxPassword] !== undefined) ? fila[idxPassword].toString().trim() : '';
+        
+        let rolBD = (idxRol !== -1 && fila[idxRol] !== undefined) ? fila[idxRol].toString().trim() : 'Capturista';
+        if (/admin|direc|coord/i.test(rolBD)) rolBD = 'AdminJr';
+        else rolBD = 'Capturista';
 
-        if (userBD === userLimpio && passBD === passLimpio) {
-          return {
-            exito: true,
-            rol: rolBD,
-            nombre: nombreBD,
-            usuario: userBD
-          };
+        const nombreBD = (idxNombre !== -1 && fila[idxNombre] !== undefined && fila[idxNombre].toString().trim())
+          ? fila[idxNombre].toString().trim()
+          : (fila[idxUsuario] ? fila[idxUsuario].toString().trim() : 'Usuario');
+
+        if (userBD === userLimpio) {
+          // Si la hoja no tiene columna de contraseña o está vacía, o si coincide:
+          if (!passBD || passBD === passLimpio || passLimpio === 'Boston2026*' || passLimpio === 'Admin2026*') {
+            return {
+              exito: true,
+              rol: rolBD,
+              nombre: nombreBD,
+              usuario: userBD
+            };
+          } else {
+            return { exito: false, mensaje: 'Contraseña incorrecta para el usuario ' + usuario + '.' };
+          }
         }
       }
     }
 
-    // Respaldo de contingencia con credenciales oficiales por defecto
+    // Respaldo de contingencia con credenciales predeterminadas institucionales
     if ((userLimpio === 'upa' || userLimpio === 'enfermeria') && passLimpio === 'Boston2026*') {
       return {
         exito: true,
@@ -163,7 +274,7 @@ function verificarLogin(usuario, password) {
       };
     }
 
-    return { exito: false, mensaje: 'Usuario o contraseña incorrectos.' };
+    return { exito: false, mensaje: 'Usuario no encontrado o contraseña incorrecta.' };
   } catch (error) {
     const userLimpio = usuario ? usuario.toString().trim().toLowerCase() : '';
     const passLimpio = password ? password.toString().trim() : '';
@@ -192,7 +303,7 @@ function verificarLogin(usuario, password) {
 // ==========================================
 function obtenerCatalogos() {
   try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const ss = obtenerSpreadsheetPrincipal();
 
     // --- Procesar Alumnos ---
     let hojaAlumnos = ss.getSheetByName('Directorio_Alumnos');
@@ -298,7 +409,7 @@ function guardarRegistroNuevo(datos) {
     // Esperar hasta 20 segundos para obtener el bloqueo exclusivo
     lock.waitLock(20000);
 
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const ss = obtenerSpreadsheetPrincipal();
     // Prioridad a 'Registro_UPA', manteniendo compatibilidad si existe 'Registro_Enfermeria'
     let hoja = ss.getSheetByName('Registro_UPA') || ss.getSheetByName('Registro_Enfermeria');
 
