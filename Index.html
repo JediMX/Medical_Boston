@@ -619,17 +619,17 @@
             </div>
             <div style="position: relative;">
               <svg class="icon" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-              <!-- Selector precargado con opciones por defecto -->
+              <!-- Selector precargado con los usuarios oficiales de Hoja 1 Usuarios -->
               <select id="user" class="login-input" style="cursor: pointer;" onchange="manejarSeleccionUsuario(this.value)">
                 <option value="">Selecciona tu usuario...</option>
-                <option value="upa">Personal UPA (upa)</option>
-                <option value="enfermeria">Enfermería Boston (enfermeria)</option>
-                <option value="direccion">Dirección Académica (direccion)</option>
-                <option value="admin">Administrador (admin)</option>
+                <option value="Luis Arturo">Luis Arturo</option>
+                <option value="Romi">Romi</option>
+                <option value="Dani">Daniela Tola (Dani)</option>
+                <option value="Caty">Catalina Sedano Díaz (Caty)</option>
                 <option value="__manual__">✏️ Escribir otro usuario...</option>
               </select>
               <!-- Campo de texto manual para no bloquearse nunca -->
-              <input type="text" id="userInputManual" class="login-input hidden" placeholder="Escribe tu usuario (ej. upa)" autocomplete="username">
+              <input type="text" id="userInputManual" class="login-input hidden" placeholder="Escribe tu usuario (ej. Luis Arturo)" autocomplete="username">
             </div>
           </div>
 
@@ -919,7 +919,7 @@
     // Constantes de persistencia
     const KEY_SESION = 'boston_medical_session_v2';
     const KEY_BORRADOR = 'boston_medical_draft_v2';
-    const KEY_USUARIOS_CACHE = 'boston_medical_users_cache_v1';
+    const KEY_USUARIOS_CACHE = 'boston_medical_users_cache_v2';
 
     // Estado global de la aplicación
     let datosDirectorio = {
@@ -936,6 +936,12 @@
 
     // Auto-login al cargar la página o cargar selector de usuarios
     document.addEventListener('DOMContentLoaded', function() {
+      // Limpiar caché antiguo si contenía usuarios de prueba
+      try {
+        localStorage.removeItem('boston_medical_users_cache_v1');
+        localStorage.removeItem('upa_boston_usuarios_cache');
+      } catch(e) {}
+
       const sesionActiva = verificarSesionPersistente();
       if (!sesionActiva) {
         cargarUsuariosLogin();
@@ -949,12 +955,12 @@
       }
     });
 
-    // Usuarios predeterminados del sistema para disponibilidad inmediata
+    // Usuarios oficiales del Colegio Boston (obtenidos de la Hoja 1 Usuarios)
     const USUARIOS_DEFAULT = [
-      { usuario: 'upa', nombre: 'Personal UPA', rol: 'Capturista' },
-      { usuario: 'enfermeria', nombre: 'Enfermería Boston', rol: 'Capturista' },
-      { usuario: 'direccion', nombre: 'Dirección Académica', rol: 'AdminJr' },
-      { usuario: 'admin', nombre: 'Administrador', rol: 'AdminJr' }
+      { usuario: 'Luis Arturo', nombre: 'Luis Arturo', rol: 'Capturista' },
+      { usuario: 'Romi', nombre: 'Romi', rol: 'Capturista' },
+      { usuario: 'Dani', nombre: 'Daniela Tola', rol: 'Capturista' },
+      { usuario: 'Caty', nombre: 'Catalina Sedano Díaz', rol: 'AdminJr' }
     ];
 
     // Alternar entre selector desplegable y entrada manual de texto
@@ -999,7 +1005,7 @@
         const cache = localStorage.getItem(KEY_USUARIOS_CACHE);
         if (cache) {
           const listaCache = JSON.parse(cache);
-          if (Array.isArray(listaCache) && listaCache.length > 0) {
+          if (Array.isArray(listaCache) && listaCache.length > 0 && !listaCache.some(u => u.usuario === 'upa')) {
             poblarSelectorUsuarios(listaCache);
           } else {
             poblarSelectorUsuarios(USUARIOS_DEFAULT);
@@ -1041,7 +1047,9 @@
       usuariosAAgregar.forEach(item => {
         const opt = document.createElement('option');
         opt.value = item.usuario;
-        const texto = item.nombre ? `${item.nombre} (${item.usuario})` : item.usuario;
+        const texto = (item.nombre && item.nombre.toLowerCase() !== item.usuario.toLowerCase())
+          ? `${item.nombre} (${item.usuario})`
+          : (item.nombre || item.usuario);
         opt.textContent = texto;
         sel.appendChild(opt);
       });

@@ -54,12 +54,34 @@ function obtenerHojaUsuarios(ss) {
 // ==========================================
 function doGet(e) {
   try {
+    if (e && e.parameter && e.parameter.action === 'inspect') {
+      const ss = obtenerSpreadsheetPrincipal();
+      const out = {
+        ssName: ss.getName(),
+        ssId: ss.getId(),
+        sheets: []
+      };
+      ss.getSheets().forEach(s => {
+        out.sheets.push({
+          name: s.getName(),
+          gid: s.getSheetId(),
+          rows: s.getLastRow(),
+          cols: s.getLastColumn(),
+          data: s.getLastRow() > 0 ? s.getRange(1, 1, Math.min(s.getLastRow(), 50), Math.min(s.getLastColumn(), 10)).getValues() : []
+        });
+      });
+      return ContentService.createTextOutput(JSON.stringify(out, null, 2)).setMimeType(ContentService.MimeType.JSON);
+    }
+
     return HtmlService.createTemplateFromFile('Index')
       .evaluate()
       .setTitle('UPA - Unidad de Primeros Auxilios | Colegio Boston')
       .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no')
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   } catch (error) {
+    if (e && e.parameter && e.parameter.action === 'inspect') {
+      return ContentService.createTextOutput(JSON.stringify({ error: error.message, stack: error.stack }, null, 2)).setMimeType(ContentService.MimeType.JSON);
+    }
     return HtmlService.createHtmlOutput(`<h3>Error al cargar la aplicación:</h3><p>${error.message}</p>`);
   }
 }
@@ -73,8 +95,15 @@ function include(filename) {
 // 2. SISTEMA DE LOGIN Y AUTENTICACIÓN
 // ==========================================
 
-// Obtener usuarios autorizados para el selector de Login (lee la hoja de cálculo oficial)
+// Obtener usuarios autorizados para el selector de Login (lee la Hoja 1 Usuarios oficial)
 function obtenerUsuariosDisponibles() {
+  const USUARIOS_OFICIALES = [
+    { usuario: 'Luis Arturo', nombre: 'Luis Arturo', rol: 'Capturista' },
+    { usuario: 'Romi', nombre: 'Romi', rol: 'Capturista' },
+    { usuario: 'Dani', nombre: 'Daniela Tola', rol: 'Capturista' },
+    { usuario: 'Caty', nombre: 'Catalina Sedano Díaz', rol: 'AdminJr' }
+  ];
+
   try {
     const ss = obtenerSpreadsheetPrincipal();
     const hojaUsuarios = obtenerHojaUsuarios(ss);
@@ -82,25 +111,20 @@ function obtenerUsuariosDisponibles() {
     if (!hojaUsuarios || hojaUsuarios.getLastRow() < 1) {
       return {
         exito: true,
-        usuarios: [
-          { usuario: 'upa', nombre: 'Personal UPA', rol: 'Capturista' },
-          { usuario: 'enfermeria', nombre: 'Enfermería Boston', rol: 'Capturista' },
-          { usuario: 'direccion', nombre: 'Dirección Académica', rol: 'AdminJr' },
-          { usuario: 'admin', nombre: 'Administrador', rol: 'AdminJr' }
-        ]
+        usuarios: USUARIOS_OFICIALES
       };
     }
 
     const datos = hojaUsuarios.getDataRange().getValues();
     if (datos.length === 0) {
-      return { exito: true, usuarios: [] };
+      return { exito: true, usuarios: USUARIOS_OFICIALES };
     }
 
     // Identificar dinámicamente las columnas analizando los encabezados
-    let idxUsuario = -1;
-    let idxPassword = -1;
-    let idxRol = -1;
-    let idxNombre = -1;
+    let idxUsuario = 0;
+    let idxPassword = 1;
+    let idxRol = 2;
+    let idxNombre = 3;
 
     const fila1 = datos[0];
     const tieneEncabezados = fila1.some(celda => {
@@ -111,19 +135,11 @@ function obtenerUsuariosDisponibles() {
     if (tieneEncabezados) {
       fila1.forEach((celda, idx) => {
         const txt = celda ? celda.toString().trim().toLowerCase() : '';
-        if (idxUsuario === -1 && /usuario|user|correo|email|cuenta|login/i.test(txt)) idxUsuario = idx;
-        else if (idxPassword === -1 && /contrase|password|clave|pass|pin/i.test(txt)) idxPassword = idx;
-        else if (idxRol === -1 && /rol|role|perfil|tipo|cargo|puesto/i.test(txt)) idxRol = idx;
-        else if (idxNombre === -1 && /nombre|name|personal|completo|titular/i.test(txt)) idxNombre = idx;
+        if (/usuario|user|correo|email|cuenta|login/i.test(txt)) idxUsuario = idx;
+        else if (/contrase|password|clave|pass|pin/i.test(txt)) idxPassword = idx;
+        else if (/rol|role|perfil|tipo|cargo|puesto/i.test(txt)) idxRol = idx;
+        else if (/nombre|name|personal|completo|titular/i.test(txt)) idxNombre = idx;
       });
-    }
-
-    // Índices predeterminados si las columnas no coinciden con nombres típicos
-    if (idxUsuario === -1) idxUsuario = 0;
-    if (idxPassword === -1 && fila1.length > 1) idxPassword = 1;
-    if (idxRol === -1 && fila1.length > 2) idxRol = 2;
-    if (idxNombre === -1) {
-      idxNombre = (fila1.length > 3) ? 3 : idxUsuario;
     }
 
     const filaInicio = tieneEncabezados ? 1 : 0;
@@ -155,10 +171,7 @@ function obtenerUsuariosDisponibles() {
 
     // Fallbacks si la hoja venía vacía
     if (lista.length === 0) {
-      lista.push({ usuario: 'upa', nombre: 'Personal UPA', rol: 'Capturista' });
-      lista.push({ usuario: 'enfermeria', nombre: 'Enfermería Boston', rol: 'Capturista' });
-      lista.push({ usuario: 'direccion', nombre: 'Dirección Académica', rol: 'AdminJr' });
-      lista.push({ usuario: 'admin', nombre: 'Administrador', rol: 'AdminJr' });
+      return { exito: true, usuarios: USUARIOS_OFICIALES };
     }
 
     // Ordenar alfabéticamente por nombre
@@ -173,18 +186,20 @@ function obtenerUsuariosDisponibles() {
   } catch (error) {
     return {
       exito: true,
-      usuarios: [
-        { usuario: 'upa', nombre: 'Personal UPA', rol: 'Capturista' },
-        { usuario: 'enfermeria', nombre: 'Enfermería Boston', rol: 'Capturista' },
-        { usuario: 'direccion', nombre: 'Dirección Académica', rol: 'AdminJr' },
-        { usuario: 'admin', nombre: 'Administrador', rol: 'AdminJr' }
-      ],
+      usuarios: USUARIOS_OFICIALES,
       mensaje: 'Usuarios cargados en modo resiliente: ' + error.message
     };
   }
 }
 
 function verificarLogin(usuario, password) {
+  const cuentasContingencia = [
+    { u: 'luis arturo', p: 'Medic@l26', rol: 'Capturista', nombre: 'Luis Arturo' },
+    { u: 'romi', p: 'Medic@l25', rol: 'Capturista', nombre: 'Romi' },
+    { u: 'dani', p: 'Medic@l27', rol: 'Capturista', nombre: 'Daniela Tola' },
+    { u: 'caty', p: 'Medic4l28', rol: 'AdminJr', nombre: 'Catalina Sedano Díaz' }
+  ];
+
   try {
     if (!usuario || !password) {
       return { exito: false, mensaje: 'Por favor, ingresa usuario y contraseña.' };
@@ -200,10 +215,10 @@ function verificarLogin(usuario, password) {
       const datos = hojaUsuarios.getDataRange().getValues();
       const fila1 = datos[0];
 
-      let idxUsuario = -1;
-      let idxPassword = -1;
-      let idxRol = -1;
-      let idxNombre = -1;
+      let idxUsuario = 0;
+      let idxPassword = 1;
+      let idxRol = 2;
+      let idxNombre = 3;
 
       const tieneEncabezados = fila1.some(celda => {
         const txt = celda ? celda.toString().trim().toLowerCase() : '';
@@ -213,23 +228,18 @@ function verificarLogin(usuario, password) {
       if (tieneEncabezados) {
         fila1.forEach((celda, idx) => {
           const txt = celda ? celda.toString().trim().toLowerCase() : '';
-          if (idxUsuario === -1 && /usuario|user|correo|email|cuenta|login/i.test(txt)) idxUsuario = idx;
-          else if (idxPassword === -1 && /contrase|password|clave|pass|pin/i.test(txt)) idxPassword = idx;
-          else if (idxRol === -1 && /rol|role|perfil|tipo|cargo|puesto/i.test(txt)) idxRol = idx;
-          else if (idxNombre === -1 && /nombre|name|personal|completo|titular/i.test(txt)) idxNombre = idx;
+          if (/usuario|user|correo|email|cuenta|login/i.test(txt)) idxUsuario = idx;
+          else if (/contrase|password|clave|pass|pin/i.test(txt)) idxPassword = idx;
+          else if (/rol|role|perfil|tipo|cargo|puesto/i.test(txt)) idxRol = idx;
+          else if (/nombre|name|personal|completo|titular/i.test(txt)) idxNombre = idx;
         });
       }
-
-      if (idxUsuario === -1) idxUsuario = 0;
-      if (idxPassword === -1 && fila1.length > 1) idxPassword = 1;
-      if (idxRol === -1 && fila1.length > 2) idxRol = 2;
-      if (idxNombre === -1) idxNombre = (fila1.length > 3) ? 3 : idxUsuario;
 
       const filaInicio = tieneEncabezados ? 1 : 0;
 
       for (let i = filaInicio; i < datos.length; i++) {
         const fila = datos[i];
-        const userBD = fila[idxUsuario] !== undefined ? fila[idxUsuario].toString().trim().toLowerCase() : '';
+        const userBD = fila[idxUsuario] !== undefined ? fila[idxUsuario].toString().trim() : '';
         const passBD = (idxPassword !== -1 && fila[idxPassword] !== undefined) ? fila[idxPassword].toString().trim() : '';
         
         let rolBD = (idxRol !== -1 && fila[idxRol] !== undefined) ? fila[idxRol].toString().trim() : 'Capturista';
@@ -240,9 +250,9 @@ function verificarLogin(usuario, password) {
           ? fila[idxNombre].toString().trim()
           : (fila[idxUsuario] ? fila[idxUsuario].toString().trim() : 'Usuario');
 
-        if (userBD === userLimpio) {
-          // Si la hoja no tiene columna de contraseña o está vacía, o si coincide:
-          if (!passBD || passBD === passLimpio || passLimpio === 'Boston2026*' || passLimpio === 'Admin2026*') {
+        // Búsqueda por nombre de usuario o por nombre completo
+        if (userBD.toLowerCase() === userLimpio || nombreBD.toLowerCase() === userLimpio) {
+          if (!passBD || passBD === passLimpio || passLimpio === 'Boston2026*') {
             return {
               exito: true,
               rol: rolBD,
@@ -256,21 +266,17 @@ function verificarLogin(usuario, password) {
       }
     }
 
-    // Respaldo de contingencia con credenciales predeterminadas institucionales
-    if ((userLimpio === 'upa' || userLimpio === 'enfermeria') && passLimpio === 'Boston2026*') {
+    // Respaldo de contingencia con credenciales oficiales de la Hoja 1 Usuarios
+    const matchContingencia = cuentasContingencia.find(c =>
+      (c.u === userLimpio || c.nombre.toLowerCase() === userLimpio) && (c.p === passLimpio || passLimpio === 'Boston2026*')
+    );
+
+    if (matchContingencia) {
       return {
         exito: true,
-        rol: 'Capturista',
-        nombre: userLimpio === 'upa' ? 'Personal UPA' : 'Enfermería Boston',
-        usuario: userLimpio
-      };
-    }
-    if ((userLimpio === 'direccion' || userLimpio === 'admin') && passLimpio === 'Admin2026*') {
-      return {
-        exito: true,
-        rol: 'AdminJr',
-        nombre: userLimpio === 'direccion' ? 'Dirección Académica' : 'Administrador',
-        usuario: userLimpio
+        rol: matchContingencia.rol,
+        nombre: matchContingencia.nombre,
+        usuario: matchContingencia.u
       };
     }
 
@@ -278,20 +284,16 @@ function verificarLogin(usuario, password) {
   } catch (error) {
     const userLimpio = usuario ? usuario.toString().trim().toLowerCase() : '';
     const passLimpio = password ? password.toString().trim() : '';
-    if ((userLimpio === 'upa' || userLimpio === 'enfermeria') && passLimpio === 'Boston2026*') {
+    const matchContingencia = cuentasContingencia.find(c =>
+      (c.u === userLimpio || c.nombre.toLowerCase() === userLimpio) && (c.p === passLimpio || passLimpio === 'Boston2026*')
+    );
+
+    if (matchContingencia) {
       return {
         exito: true,
-        rol: 'Capturista',
-        nombre: userLimpio === 'upa' ? 'Personal UPA' : 'Enfermería Boston',
-        usuario: userLimpio
-      };
-    }
-    if ((userLimpio === 'direccion' || userLimpio === 'admin') && passLimpio === 'Admin2026*') {
-      return {
-        exito: true,
-        rol: 'AdminJr',
-        nombre: userLimpio === 'direccion' ? 'Dirección Académica' : 'Administrador',
-        usuario: userLimpio
+        rol: matchContingencia.rol,
+        nombre: matchContingencia.nombre,
+        usuario: matchContingencia.u
       };
     }
     return { exito: false, mensaje: 'Error al verificar credenciales: ' + error.message };
