@@ -54,8 +54,14 @@ function obtenerHojaUsuarios(ss) {
 // ==========================================
 function doGet(e) {
   try {
+    if (e && e.parameter && e.parameter.action === 'sync_docentes') {
+      const res = sincronizarDocentesSheets(true);
+      return ContentService.createTextOutput(JSON.stringify(res, null, 2)).setMimeType(ContentService.MimeType.JSON);
+    }
+
     if (e && e.parameter && e.parameter.action === 'inspect') {
-      const ss = obtenerSpreadsheetPrincipal();
+      const targetId = (e.parameter && e.parameter.id) ? e.parameter.id : ID_SPREADSHEET_PRINCIPAL;
+      const ss = SpreadsheetApp.openById(targetId);
       const out = {
         ssName: ss.getName(),
         ssId: ss.getId(),
@@ -67,7 +73,7 @@ function doGet(e) {
           gid: s.getSheetId(),
           rows: s.getLastRow(),
           cols: s.getLastColumn(),
-          data: s.getLastRow() > 0 ? s.getRange(1, 1, Math.min(s.getLastRow(), 50), Math.min(s.getLastColumn(), 10)).getValues() : []
+          data: s.getLastRow() > 0 ? s.getRange(1, 1, Math.min(s.getLastRow(), 150), Math.min(s.getLastColumn(), 15)).getValues() : []
         });
       });
       return ContentService.createTextOutput(JSON.stringify(out, null, 2)).setMimeType(ContentService.MimeType.JSON);
@@ -301,7 +307,115 @@ function verificarLogin(usuario, password) {
 }
 
 // ==========================================
-// 3. OBTENER LISTAS DINÁMICAS (CATÁLOGOS)
+// 3. CATÁLOGO DE DOCENTES Y PERSONAL
+// ==========================================
+
+// Lista oficial de docentes del Colegio Boston (obtenida del directorio institucional)
+const LISTA_DOCENTES_OFICIAL = [
+  { nombre: "Adriana Lopez Rios", email: "adrianalopez@boston.edu.mx" },
+  { nombre: "Alejandro Galindo Flores", email: "alejandrogalindo@boston.edu.mx" },
+  { nombre: "Arlette Concepcion Bernal Diaz", email: "arlettebernal@boston.edu.mx" },
+  { nombre: "Karen Atenea Pineda Martinez", email: "ateneapineda@boston.edu.mx" },
+  { nombre: "Atzimba Cruz Rodriguez", email: "atzimbacruz@boston.edu.mx" },
+  { nombre: "Bernardo Castillo Lopez", email: "bernardocastillo@boston.edu.mx" },
+  { nombre: "César Romero Pérez", email: "cesarromero@boston.edu.mx" },
+  { nombre: "Citlalli Ferrari Díaz", email: "citlalliferrari@boston.edu.mx" },
+  { nombre: "Conch Aguirre de Samaniego", email: "conch_aguirrev@boston.edu.mx" },
+  { nombre: "Edgar Villalobos Valdovinos", email: "edgarvillalobos@boston.edu.mx" },
+  { nombre: "Elizabeth Hernandez Govea", email: "elihernandez@boston.edu.mx" },
+  { nombre: "Elizabeth Diaz Bahena", email: "elizabethdiazb@boston.edu.mx" },
+  { nombre: "Martha Georgina Ramírez Flores", email: "ginaramirez@boston.edu.mx" },
+  { nombre: "Hugo Galera Muciño", email: "hugogaleratec@boston.edu.mx" },
+  { nombre: "Ines Enriquez Hernandez", email: "inesenriquezh@boston.edu.mx" },
+  { nombre: "Rodrigo Castro", email: "j.rodrigocastro@boston.edu.mx" },
+  { nombre: "Jackeline Hernández Balbuena", email: "jackelinehdz@boston.edu.mx" },
+  { nombre: "Jose Antonio Gonzalez Gonzalez", email: "joseantonio@boston.edu.mx" },
+  { nombre: "Laura Itzel Serna Ocampo", email: "lauraserna@boston.edu.mx" },
+  { nombre: "Liliana Velazquez Garcia", email: "lilianavelazquezg@boston.edu.mx" },
+  { nombre: "Karla Lorena Gómez Escamilla", email: "lorenagomez@boston.edu.mx" },
+  { nombre: "Lyzzete Roman Salgado", email: "lyzzeteroman@boston.edu.mx" },
+  { nombre: "Mara Janet Vazquez Rivera", email: "maravazquez@boston.edu.mx" },
+  { nombre: "Marco Antonio Velazquez Guebara", email: "marcovelazquez@boston.edu.mx" },
+  { nombre: "Mario Zapata Sosa", email: "mariozapata@boston.edu.mx" },
+  { nombre: "Nestor Omar Lara Ortiz", email: "nestorlara@boston.edu.mx" },
+  { nombre: "Quiroz Servin Jesús Adrián", email: "quiroservin@boston.edu.mx" },
+  { nombre: "Ramon Rodriguez Delgado", email: "ramonrodriguez@boston.edu.mx" },
+  { nombre: "Raquel Zozaya Arellano", email: "raquelzozaya@boston.edu.mx" },
+  { nombre: "Liliana Romy Monge Castillo", email: "romymonge@boston.edu.mx" },
+  { nombre: "Ruth Estela Garcia Azcarraga", email: "ruthgarcia@boston.edu.mx" },
+  { nombre: "Sebastian Sedano Ysla", email: "sebastians@boston.edu.mx" },
+  { nombre: "Susana Lozano Romero", email: "susanalozano@boston.edu.mx" },
+  { nombre: "Yadira Elizabeth Martinez Bahena", email: "yadiramartinez@boston.edu.mx" }
+];
+
+/**
+ * Sincroniza la lista oficial de 34 docentes en la pestaña Directorio_Personal
+ * de la hoja de cálculo principal del sistema (Boston_Medical_Record)
+ */
+function sincronizarDocentesSheets(forzarSobrescritura) {
+  try {
+    const ss = obtenerSpreadsheetPrincipal();
+    let hoja = ss.getSheetByName('Directorio_Personal');
+    if (!hoja) {
+      hoja = ss.insertSheet('Directorio_Personal');
+    }
+
+    const headers = ['Categoria', 'Nombre Completo', 'Correo Institucional'];
+    const totalFilas = hoja.getLastRow();
+
+    if (totalFilas <= 5 || forzarSobrescritura) {
+      // Preservar administrativos previos
+      const existentesAdmin = [];
+      if (totalFilas > 1) {
+        const datosPrevios = hoja.getDataRange().getValues();
+        datosPrevios.shift();
+        datosPrevios.forEach(r => {
+          const cat = r[0] ? r[0].toString().trim() : '';
+          const nom = r[1] ? r[1].toString().trim() : '';
+          const cor = r[2] ? r[2].toString().trim() : '';
+          if (nom && !cat.toLowerCase().includes('docente')) {
+            existentesAdmin.push([cat, nom, cor]);
+          }
+        });
+      }
+
+      const filasDocentes = LISTA_DOCENTES_OFICIAL.map(d => [
+        'Docente',
+        d.nombre,
+        d.email || ''
+      ]);
+
+      const todasLasFilas = [...filasDocentes, ...existentesAdmin];
+      if (!todasLasFilas.some(f => f[1].toLowerCase().includes('tinoco'))) {
+        todasLasFilas.push(['Administrativo', 'Gaby Tinoco', '']);
+      }
+
+      hoja.clearContents();
+      hoja.getRange(1, 1, 1, headers.length).setValues([headers]);
+      hoja.getRange(2, 1, todasLasFilas.length, headers.length).setValues(todasLasFilas);
+
+      return {
+        exito: true,
+        total: todasLasFilas.length,
+        mensaje: 'Se sincronizaron ' + todasLasFilas.length + ' miembros del personal en Directorio_Personal.'
+      };
+    }
+
+    return {
+      exito: true,
+      total: totalFilas - 1,
+      mensaje: 'Directorio_Personal ya contaba con ' + (totalFilas - 1) + ' registros.'
+    };
+  } catch (err) {
+    return {
+      exito: false,
+      mensaje: 'Error al sincronizar docentes: ' + err.message
+    };
+  }
+}
+
+// ==========================================
+// 4. OBTENER LISTAS DINÁMICAS (CATÁLOGOS)
 // ==========================================
 function obtenerCatalogos() {
   try {
@@ -356,7 +470,12 @@ function obtenerCatalogos() {
     }
 
     // --- Procesar Personal ---
-    const hojaPersonal = ss.getSheetByName('Directorio_Personal');
+    let hojaPersonal = ss.getSheetByName('Directorio_Personal');
+    if (!hojaPersonal || hojaPersonal.getLastRow() <= 5) {
+      sincronizarDocentesSheets(true);
+      hojaPersonal = ss.getSheetByName('Directorio_Personal');
+    }
+
     let catalogoPersonal = { 'Docentes': [], 'Admin': [], 'Otros': [] };
 
     if (hojaPersonal && hojaPersonal.getLastRow() > 1) {
@@ -369,21 +488,30 @@ function obtenerCatalogos() {
 
         if (nombre) {
           const catLower = categoria.toLowerCase();
+          const textoVisible = (catLower !== 'docente' && catLower !== 'general' && catLower !== '') 
+            ? `${nombre} (${categoria})` 
+            : nombre;
+
           if (catLower.includes('docente') || catLower.includes('profesor') || catLower.includes('maestr')) {
-            catalogoPersonal['Docentes'].push(`${nombre} (${categoria})`);
+            catalogoPersonal['Docentes'].push(textoVisible);
           } else if (catLower.includes('administrativo') || catLower.includes('admin') || catLower.includes('direcci')) {
-            catalogoPersonal['Admin'].push(`${nombre} (${categoria})`);
+            catalogoPersonal['Admin'].push(textoVisible);
           } else {
-            catalogoPersonal['Otros'].push(`${nombre} (${categoria})`);
+            catalogoPersonal['Otros'].push(textoVisible);
           }
         }
       });
-
-      // Ordenar listas alfabéticamente
-      catalogoPersonal['Docentes'].sort((a, b) => a.localeCompare(b, 'es'));
-      catalogoPersonal['Admin'].sort((a, b) => a.localeCompare(b, 'es'));
-      catalogoPersonal['Otros'].sort((a, b) => a.localeCompare(b, 'es'));
     }
+
+    // Si por alguna razón Docentes quedó vacío, usar lista oficial
+    if (catalogoPersonal['Docentes'].length === 0) {
+      catalogoPersonal['Docentes'] = LISTA_DOCENTES_OFICIAL.map(d => d.nombre);
+    }
+
+    // Ordenar listas alfabéticamente
+    catalogoPersonal['Docentes'].sort((a, b) => a.localeCompare(b, 'es'));
+    catalogoPersonal['Admin'].sort((a, b) => a.localeCompare(b, 'es'));
+    catalogoPersonal['Otros'].sort((a, b) => a.localeCompare(b, 'es'));
 
     return {
       exito: true,

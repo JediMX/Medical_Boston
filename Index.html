@@ -921,10 +921,52 @@
     const KEY_BORRADOR = 'boston_medical_draft_v2';
     const KEY_USUARIOS_CACHE = 'boston_medical_users_cache_v2';
 
-    // Estado global de la aplicación
+    // Lista oficial de docentes del Colegio Boston para disponibilidad instantánea
+    const DOCENTES_OFICIALES = [
+      "Adriana Lopez Rios",
+      "Alejandro Galindo Flores",
+      "Arlette Concepcion Bernal Diaz",
+      "Atzimba Cruz Rodriguez",
+      "Bernardo Castillo Lopez",
+      "César Romero Pérez",
+      "Citlalli Ferrari Díaz",
+      "Conch Aguirre de Samaniego",
+      "Edgar Villalobos Valdovinos",
+      "Elizabeth Diaz Bahena",
+      "Elizabeth Hernandez Govea",
+      "Hugo Galera Muciño",
+      "Ines Enriquez Hernandez",
+      "Jackeline Hernández Balbuena",
+      "Jose Antonio Gonzalez Gonzalez",
+      "Karen Atenea Pineda Martinez",
+      "Karla Lorena Gómez Escamilla",
+      "Laura Itzel Serna Ocampo",
+      "Liliana Romy Monge Castillo",
+      "Liliana Velazquez Garcia",
+      "Lyzzete Roman Salgado",
+      "Mara Janet Vazquez Rivera",
+      "Marco Antonio Velazquez Guebara",
+      "Mario Zapata Sosa",
+      "Martha Georgina Ramírez Flores",
+      "Nestor Omar Lara Ortiz",
+      "Quiroz Servin Jesús Adrián",
+      "Ramon Rodriguez Delgado",
+      "Raquel Zozaya Arellano",
+      "Rodrigo Castro",
+      "Ruth Estela Garcia Azcarraga",
+      "Sebastian Sedano Ysla",
+      "Susana Lozano Romero",
+      "Yadira Elizabeth Martinez Bahena"
+    ];
+
+    // Estado global de la aplicación con docentes precargados
     let datosDirectorio = {
       alumnos: {},
-      personal: { Docentes: [], Admin: [], Otros: [] }
+      personal: { 
+        Docentes: [...DOCENTES_OFICIALES], 
+        Admin: ['Gaby Tinoco (Administrativo)', 'Catalina Sedano Díaz (Dirección)'], 
+        Otros: [] 
+      }
     };
     let catalogosCargados = false;
     let nombreCapturistaActual = "";
@@ -1284,7 +1326,11 @@
           if (res && res.exito !== false) {
             datosDirectorio = {
               alumnos: res.alumnos || {},
-              personal: res.personal || { Docentes: [], Admin: [], Otros: [] }
+              personal: {
+                Docentes: (res.personal && res.personal.Docentes && res.personal.Docentes.length > 0) ? res.personal.Docentes : DOCENTES_OFICIALES,
+                Admin: (res.personal && res.personal.Admin && res.personal.Admin.length > 0) ? res.personal.Admin : ['Gaby Tinoco (Administrativo)', 'Catalina Sedano Díaz (Dirección)'],
+                Otros: (res.personal && res.personal.Otros) ? res.personal.Otros : []
+              }
             };
             catalogosCargados = true;
 
