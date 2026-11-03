@@ -613,11 +613,24 @@
 
         <form id="loginForm" onsubmit="procesarLogin(event)">
           <div class="input-group">
-            <label for="user">Usuario Autorizado</label>
-            <svg class="icon" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-            <select id="user" class="login-input" style="cursor: pointer;" required onchange="if(this.value) document.getElementById('pass').focus();">
-              <option value="">Cargando usuarios autorizados...</option>
-            </select>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <label for="user" id="lblUsuario" style="margin-bottom: 0;">Usuario Autorizado</label>
+              <a href="javascript:void(0)" onclick="alternarModoIngresoUsuario()" id="linkModoUsuario" style="font-size: 12px; color: var(--color-primario); text-decoration: underline; font-weight: 500; cursor: pointer;">✏️ Escribir manual</a>
+            </div>
+            <div style="position: relative;">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+              <!-- Selector precargado con opciones por defecto -->
+              <select id="user" class="login-input" style="cursor: pointer;" onchange="manejarSeleccionUsuario(this.value)">
+                <option value="">Selecciona tu usuario...</option>
+                <option value="upa">Personal UPA (upa)</option>
+                <option value="enfermeria">Enfermería Boston (enfermeria)</option>
+                <option value="direccion">Dirección Académica (direccion)</option>
+                <option value="admin">Administrador (admin)</option>
+                <option value="__manual__">✏️ Escribir otro usuario...</option>
+              </select>
+              <!-- Campo de texto manual para no bloquearse nunca -->
+              <input type="text" id="userInputManual" class="login-input hidden" placeholder="Escribe tu usuario (ej. upa)" autocomplete="username">
+            </div>
           </div>
 
           <div class="input-group">
@@ -936,39 +949,84 @@
       }
     });
 
-    // Carga dinámica de la lista de usuarios autorizados
+    // Usuarios predeterminados del sistema para disponibilidad inmediata
+    const USUARIOS_DEFAULT = [
+      { usuario: 'upa', nombre: 'Personal UPA', rol: 'Capturista' },
+      { usuario: 'enfermeria', nombre: 'Enfermería Boston', rol: 'Capturista' },
+      { usuario: 'direccion', nombre: 'Dirección Académica', rol: 'AdminJr' },
+      { usuario: 'admin', nombre: 'Administrador', rol: 'AdminJr' }
+    ];
+
+    // Alternar entre selector desplegable y entrada manual de texto
+    function alternarModoIngresoUsuario(forzarManual) {
+      const selectUser = document.getElementById('user');
+      const inputManual = document.getElementById('userInputManual');
+      const link = document.getElementById('linkModoUsuario');
+      if (!selectUser || !inputManual) return;
+
+      const irAManual = forzarManual !== undefined ? forzarManual : inputManual.classList.contains('hidden');
+
+      if (irAManual) {
+        selectUser.classList.add('hidden');
+        inputManual.classList.remove('hidden');
+        if (link) link.textContent = '📋 Elegir de lista';
+        inputManual.focus();
+      } else {
+        inputManual.classList.add('hidden');
+        selectUser.classList.remove('hidden');
+        if (link) link.textContent = '✏️ Escribir manual';
+        if (selectUser.value === '__manual__') selectUser.value = '';
+        selectUser.focus();
+      }
+    }
+
+    function manejarSeleccionUsuario(val) {
+      if (val === '__manual__') {
+        alternarModoIngresoUsuario(true);
+      } else if (val) {
+        const pass = document.getElementById('pass');
+        if (pass) pass.focus();
+      }
+    }
+
+    // Carga ultra-resiliente de la lista de usuarios autorizados
     function cargarUsuariosLogin() {
       const sel = document.getElementById('user');
       if (!sel) return;
 
-      // 1. Mostrar de inmediato la lista en caché si existe (cero latencia)
+      // 1. Mostrar de inmediato la lista (desde caché o predeterminada institucional)
       try {
         const cache = localStorage.getItem(KEY_USUARIOS_CACHE);
         if (cache) {
           const listaCache = JSON.parse(cache);
           if (Array.isArray(listaCache) && listaCache.length > 0) {
             poblarSelectorUsuarios(listaCache);
+          } else {
+            poblarSelectorUsuarios(USUARIOS_DEFAULT);
           }
+        } else {
+          poblarSelectorUsuarios(USUARIOS_DEFAULT);
         }
-      } catch(e) {}
+      } catch(e) {
+        poblarSelectorUsuarios(USUARIOS_DEFAULT);
+      }
 
-      // 2. Sincronizar en segundo plano con la base de datos de Sheets
-      google.script.run
-        .withSuccessHandler(function(res) {
-          if (res && res.exito && Array.isArray(res.usuarios) && res.usuarios.length > 0) {
-            poblarSelectorUsuarios(res.usuarios);
-            try {
-              localStorage.setItem(KEY_USUARIOS_CACHE, JSON.stringify(res.usuarios));
-            } catch(e) {}
-          }
-        })
-        .withFailureHandler(function(err) {
-          console.warn("No se pudo actualizar lista de usuarios desde el servidor:", err);
-          if (sel.options.length <= 1) {
-            sel.innerHTML = '<option value="">Error al cargar usuarios autorizados</option>';
-          }
-        })
-        .obtenerUsuariosDisponibles();
+      // 2. Sincronizar en segundo plano con la base de datos de Sheets si está en Apps Script
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler(function(res) {
+            if (res && res.exito && Array.isArray(res.usuarios) && res.usuarios.length > 0) {
+              poblarSelectorUsuarios(res.usuarios);
+              try {
+                localStorage.setItem(KEY_USUARIOS_CACHE, JSON.stringify(res.usuarios));
+              } catch(e) {}
+            }
+          })
+          .withFailureHandler(function(err) {
+            console.warn("No se pudo actualizar lista de usuarios desde Sheets, manteniendo locales:", err);
+          })
+          .obtenerUsuariosDisponibles();
+      }
     }
 
     function poblarSelectorUsuarios(lista) {
@@ -978,7 +1036,9 @@
       const valorActual = sel.value;
       sel.innerHTML = '<option value="">Selecciona tu usuario...</option>';
 
-      lista.forEach(item => {
+      const usuariosAAgregar = (Array.isArray(lista) && lista.length > 0) ? lista : USUARIOS_DEFAULT;
+
+      usuariosAAgregar.forEach(item => {
         const opt = document.createElement('option');
         opt.value = item.usuario;
         const texto = item.nombre ? `${item.nombre} (${item.usuario})` : item.usuario;
@@ -986,7 +1046,13 @@
         sel.appendChild(opt);
       });
 
-      if (valorActual) {
+      // Añadir opción interactiva para escribir manualmente
+      const optManual = document.createElement('option');
+      optManual.value = '__manual__';
+      optManual.textContent = '✏️ Escribir otro usuario...';
+      sel.appendChild(optManual);
+
+      if (valorActual && valorActual !== '__manual__') {
         sel.value = valorActual;
       }
     }
@@ -1033,13 +1099,31 @@
       e.preventDefault();
       ocultarAlerta('loginAlerta');
 
-      const u = document.getElementById('user').value.trim();
+      const selectUser = document.getElementById('user');
+      const inputManual = document.getElementById('userInputManual');
       const p = document.getElementById('pass').value.trim();
       const recordar = document.getElementById('chkRecordarSesion').checked;
 
+      let u = '';
+      const esModoManual = inputManual && !inputManual.classList.contains('hidden');
+
+      if (esModoManual) {
+        u = inputManual.value.trim();
+      } else if (selectUser) {
+        u = selectUser.value.trim();
+      }
+
+      // Si seleccionó la opción de escribir manualmente
+      if (u === '__manual__') {
+        alternarModoIngresoUsuario(true);
+        mostrarAlerta('loginAlerta', 'Por favor escribe tu usuario en el recuadro.', 'info');
+        return;
+      }
+
       if (!u) {
-        mostrarAlerta('loginAlerta', 'Por favor selecciona tu usuario de la lista.', 'error');
-        document.getElementById('user').focus();
+        mostrarAlerta('loginAlerta', 'Por favor selecciona o escribe tu usuario.', 'error');
+        if (esModoManual) inputManual.focus();
+        else if (selectUser) selectUser.focus();
         return;
       }
 
@@ -1100,6 +1184,10 @@
       document.getElementById('seccionCapturista').classList.add('hidden');
       document.getElementById('seccionAdminJr').classList.add('hidden');
       document.getElementById('loginForm').reset();
+      if (document.getElementById('userInputManual')) {
+        document.getElementById('userInputManual').value = '';
+        alternarModoIngresoUsuario(false);
+      }
       limpiarFormulario();
       ocultarAlerta('loginAlerta');
       ocultarAlerta('formAlerta');
